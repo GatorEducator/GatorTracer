@@ -1,0 +1,18 @@
+[tool.poetry]
+name = "gatortracer"
+version = "0.1.0"
+description = ""
+authors = ["Yanqiao4396 <chen02@allegheny.edu>"]
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "3.9.6"
+PyGithub = "^1.58.2"
+customtkinter = "^5.2.0"
+dash = "^2.10.2"
+plotly = "^5.15.0"
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
