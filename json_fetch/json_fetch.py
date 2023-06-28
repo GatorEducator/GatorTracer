@@ -1,11 +1,11 @@
 import base64
+import copy
 import json
 import re
-from typing import Tuple
-
-from github import Github, Organization
+from typing import List, Tuple
 
 from gh_token import Token
+from github import Github, Organization
 
 
 class Reference:
@@ -16,9 +16,8 @@ class Reference:
 
         self.in_repos = self.in_json["repository"]
         self.in_orgs = self.in_json["organization"]
-        # self.ex_repo
-        # self.ex_org
-
+        self.ex_repos = self.ex_repos["repository"]
+        self.ex_orgs = self.ex_repos["organization"]
 
 class JsonFetch:
     def __init__(self, token, instructions: Tuple) -> None:
@@ -29,13 +28,13 @@ class JsonFetch:
             self.excluded_orgs,
             self.excluded_repos,
         ) = instructions
-        self.out_dict = {"organizations":[]}
+        self.out_dict = {"organizations": []}
 
     def get_insight_jsons(self, dir, branch, file_regex="."):
         """Find all the matching repos and orgs."""
         self.dir, self.branch, self.file_regex = dir, branch, file_regex
         self.find_matching_orgs()
-        return True
+        return TreeDict(self.out_dict)
 
     def find_matching_orgs(self):
         """Find all the matching organizations based on the inclusion/exclusion instruction and call finding_matching_repos."""
@@ -51,11 +50,21 @@ class JsonFetch:
             # DOCUMENTATION: students have to be at least member to make the organization listed here, remind faculty to do so
             for org in self.authenticated_api.get_user().get_orgs():
                 if org.login and re.match(included_combined, org.login):
-                    self.out_dict["organizations"].append({"org-name": org.login,"repositories":self.find_matching_repos(org)})
+                    self.out_dict["organizations"].append(
+                        {
+                            "org-name": org.login,
+                            "repositories": self.find_matching_repos(org),
+                        }
+                    )
         else:
             for org in self.authenticated_api.get_user().get_orgs():
                 if org.login and not re.match(excluded_combined, org.login):
-                    self.out_dict["organizations"].append({"org-name": org.login,"repositories":self.find_matching_repos(org)})
+                    self.out_dict["organizations"].append(
+                        {
+                            "org-name": org.login,
+                            "repositories": self.find_matching_repos(org),
+                        }
+                    )
         return True
 
     def find_matching_repos(self, org_obj):
@@ -71,12 +80,22 @@ class JsonFetch:
         if self.included_repos:
             for repo in org_obj.get_repos():
                 if re.match(included_combined, repo.name):
-                    matching_repos.append({"repo-name": repo.name, "insights":self.find_matching_files(repo)})
+                    matching_repos.append(
+                        {
+                            "repo-name": repo.name,
+                            "insights": self.find_matching_files(repo),
+                        }
+                    )
 
         else:
             for repo in org_obj.get_repos():
                 if not re.match(excluded_combined, repo.name):
-                    matching_repos.append({"repo-name": repo.name, "insights":self.find_matching_files(repo)})
+                    matching_repos.append(
+                        {
+                            "repo-name": repo.name,
+                            "insights": self.find_matching_files(repo),
+                        }
+                    )
         return matching_repos
 
     def find_matching_files(self, repo_obj):
@@ -91,7 +110,9 @@ class JsonFetch:
                 decoded_content = base64.b64decode(f.content).decode("utf-8")
                 # get file name without extension
                 f_pure_name = ".".join(f.name.split(".")[:-1])
-                files_dict.append({"file":f_pure_name, "json":json.loads(decoded_content)})
+                files_dict.append(
+                    {"file": f_pure_name, "json": decoded_content}
+                )
         return files_dict
 
     def fetch_latest_json(self, dir):
@@ -99,7 +120,49 @@ class JsonFetch:
         # TODO: should only support the files generated in the format of date
         # TODO: make it a plugin
         pass
-    
+
+
+class TreeDict:
+    def __init__(self, nested_dict) -> None:
+        self.__nested_dict = nested_dict
+
+    def __str__(self):
+        return self.__nested_dict
+
+    def to_flatten_matrix(self):
+        """Flatten the report json to the file level."""
+        rows = []
+        title = []
+
+        def flatten(d, values: List = []):
+            keys_to_list = []
+            found_list = False
+            for k in d:
+                if isinstance(d[k], str) or isinstance(d[k], int):
+                    values.append(d[k])
+                    title.append(k) if k not in title else None
+                elif isinstance(d[k], list) and all(
+                    isinstance(sub, dict) for sub in d[k]
+                ):
+                    keys_to_list.append(k)
+                    found_list = True
+                else:
+                    pass  # TODO: currently assume there is no other types
+            if not found_list:
+                v = copy.deepcopy(values)
+                rows.append(v)
+            else:
+                for k in keys_to_list:
+                    for sub_d in d[k]:
+                        v = copy.deepcopy(values)
+                        flatten(sub_d, v)
+
+        flatten(self.__nested_dict)
+        matrix_with_title = [title] + rows
+        return matrix_with_title
+        
+
+
 
 if __name__ == "__main__":
     refence = Reference()
@@ -108,6 +171,6 @@ if __name__ == "__main__":
     json_fetch = JsonFetch(
         token, instructions=(refence.in_orgs, refence.in_repos, [], [])
     )
-    json_fetch.get_insight_jsons("insight","insight",file_regex="insight+.")
+    json_fetch.get_insight_jsons("insight", "insight", file_regex="^(insight|hello-action)")
     with open("data/out.json", "w") as out:
         json.dump(json_fetch.out_dict, out, indent=4)
