@@ -11,6 +11,10 @@ PyGithub = "^1.58.2"
 customtkinter = "^5.2.0"
 dash = "^2.10.2"
 plotly = "^5.15.0"
+pandas = "^2.0.2"
+glom = "^23.3.0"
+typer = "<0.7.0,>=0.6.1"
+pprintjson = "^1.4.2"
 
 
 [build-system]
