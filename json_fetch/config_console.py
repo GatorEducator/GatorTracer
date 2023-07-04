@@ -44,10 +44,15 @@ class ConfigJson:
 
     def __init__(self, json_file) -> None:
         self.json_file = json_file
+        self.json_default = {"organization": [], "repository": []}
 
     def write_json(self, content):
         with open(self.json_file, "w") as f:
             json.dump(content, f)
+
+    def default_json(self):
+        with open(self.json_file, "w") as f:
+            json.dump(self.json_default, f)     
 
     def parse_json(self) -> Dict:
         with open(self.json_file, "r") as f:
