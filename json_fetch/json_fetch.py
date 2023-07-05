@@ -3,24 +3,18 @@ import copy
 import json
 import re
 from typing import List, Tuple
-
-from gh_token import Token
+from pathlib import Path
+from config_console import Token
 from github import Github, Organization
+import pandas as pd
 
+# dev
+import numpy as np
+# TODO: add error msg and passing msg
 
-class Reference:
-    # TODO: it's not necessary to have a storage file system to store those instructions as users may have different requirements every time they use this program
-    def __init__(self) -> None:
-        with open("data/include.json", "r") as js:
-            self.in_json = json.load(js)
-
-        self.in_repos = self.in_json["repository"]
-        self.in_orgs = self.in_json["organization"]
-        self.ex_repos = self.ex_repos["repository"]
-        self.ex_orgs = self.ex_repos["organization"]
 
 class JsonFetch:
-    def __init__(self, token, instructions: Tuple) -> None:
+    def __init__(self, token: str, instructions: Tuple) -> None:
         self.authenticated_api = Github(token)
         (
             self.included_orgs,
@@ -30,7 +24,7 @@ class JsonFetch:
         ) = instructions
         self.out_dict = {"organizations": []}
 
-    def get_insight_jsons(self, dir, branch, file_regex="."):
+    def get_insight_jsons(self, dir, branch, file_regex):
         """Find all the matching repos and orgs."""
         self.dir, self.branch, self.file_regex = dir, branch, file_regex
         self.find_matching_orgs()
@@ -110,9 +104,7 @@ class JsonFetch:
                 decoded_content = base64.b64decode(f.content).decode("utf-8")
                 # get file name without extension
                 f_pure_name = ".".join(f.name.split(".")[:-1])
-                files_dict.append(
-                    {"file": f_pure_name, "json": decoded_content}
-                )
+                files_dict.append({"file-name": f_pure_name, "insight": decoded_content})
         return files_dict
 
     def fetch_latest_json(self, dir):
@@ -123,18 +115,59 @@ class JsonFetch:
 
 
 class TreeDict:
+    """A nested dictionary."""
+
     def __init__(self, nested_dict) -> None:
+        """Create TreeDict instance with a dictionary"""
         self.__nested_dict = nested_dict
 
     def __str__(self):
-        return self.__nested_dict
+        """return the nested_dictionary"""
+        return str(self.__nested_dict)
 
-    def to_flatten_matrix(self):
-        """Flatten the report json to the file level."""
+    def to_flatten_matrix(self, parsing_insight:bool = False):
+        file_lvl_matrix = self.flatten_matrix_without_parsing_insight_json()
+        if not parsing_insight:
+            return file_lvl_matrix
+        else:
+            self.matrix_with_flatten_insight_json(file_lvl_matrix)
+
+    def matrix_with_flatten_insight_json(self, matrix_with_header):
+        main_df = pd.DataFrame(matrix_with_header[1:], columns=matrix_with_header[0])
+        insights = main_df["insight"]
+        print(insights)
+        del main_df["insight"]
+        for insight_idx in range(len(insights)):
+            insight_str = insights[insight_idx]
+            # load the content of insight in json format  
+            insight_dict = json.loads(insight_str)
+            insight_w_header = InsightReport(insight_dict).to_array_with_header()
+            # Get all checks state
+            insight_headers = insight_w_header[0]
+            insight_values = insight_w_header[1]
+
+            # Find matching headers in the main df
+            for i in range(len(insight_headers)):
+                insight_header =insight_headers[i]
+                # If fails to find one then create an empty one column with the insight header
+                if insight_header not in main_df.columns:
+                    main_df[insight_header] = None
+
+                main_df.loc[insight_idx,insight_header] = insight_values[i]
+        
+        main_df.to_csv("report.csv")
+
+        
+
+
+
+    def flatten_matrix_without_parsing_insight_json(self) -> List:
+        """Flatten the nested dictionary based on the leaf and put into matrix."""
         rows = []
         title = []
 
         def flatten(d, values: List = []):
+            # The keys whose value is a list of dictionary
             keys_to_list = []
             found_list = False
             for k in d:
@@ -148,9 +181,12 @@ class TreeDict:
                     found_list = True
                 else:
                     pass  # TODO: currently assume there is no other types
+            # Base case: there is no more sub-dictionary
             if not found_list:
                 v = copy.deepcopy(values)
+                # Put all the static values like string, integer (non list nor dict) of ancestors (include the current node) into the rows
                 rows.append(v)
+            # General case: call flatten function recursively with sub-dictionary as root
             else:
                 for k in keys_to_list:
                     for sub_d in d[k]:
@@ -160,17 +196,62 @@ class TreeDict:
         flatten(self.__nested_dict)
         matrix_with_title = [title] + rows
         return matrix_with_title
-        
 
+
+class InsightReport:
+    def __init__(self, insight_dict) -> None:
+        self.insight_dict = insight_dict
+    
+    def to_array_with_header(self):
+        array_w_header = [[],[]]
+        
+        # Add percentage_score and amount_correct
+
+        array_w_header[0].extend(["passing_percentage","amount_correct"])
+        # Convert a percentage score string to a decimal percentage ex: "53" to 0.53
+        passing_percentage = "{0:.2f}".format(int(self.insight_dict["percentage_score"])*0.01)
+        array_w_header[1].append(passing_percentage) if "percentage_score" in self.insight_dict else array_w_header[1].append(None)
+        array_w_header[1].append(int(self.insight_dict["amount_correct"])) if "amount_correct" in self.insight_dict else array_w_header[1].append(None)
+
+        checks = dict()
+        for check in self.insight_dict["checks"]:
+            if "check" in check:
+                check_type = check["check"]
+            elif "command" in check:
+                # TODO: doesn't support command now as the wide variety of the command types like lint, running correctly and etc
+                # TODO: maybe we should add tag to the command to standardize them
+                pass
+            else:
+                pass
+
+            # distinguish the checks with different fragments. e.x.: MatchFileFragment_TODO isn't the same with MatchFileFragment_NAME
+            if "options" in check and "fragment" in check["options"]:
+                check_type +=  "_" + str(check["options"]["fragment"])
+            
+            # implement AND logic. If multi checks have the same check type. Pass True iff all the status is True
+            if check_type not in checks:
+                checks[check_type] = check["status"]
+            
+            # as long as one of the checks with the same type is False, then the check type should be False
+            elif checks[check_type] == True and check["status"] == False:
+                checks[check_type] = False
+            else:
+                # Don't change anything in other cases
+                pass
+
+        header_bool_pair = list(checks.items())
+        for pair in header_bool_pair:
+            header = pair[0]
+            pass_state = pair[1]
+            array_w_header[0].append(header)
+            array_w_header[1].append(pass_state)
+
+        return array_w_header
 
 
 if __name__ == "__main__":
-    refence = Reference()
-    token_obj = Token()
-    token = token_obj.get_token()
-    json_fetch = JsonFetch(
-        token, instructions=(refence.in_orgs, refence.in_repos, [], [])
-    )
-    json_fetch.get_insight_jsons("insight", "insight", file_regex="^(insight|hello-action)")
-    with open("data/out.json", "w") as out:
-        json.dump(json_fetch.out_dict, out, indent=4)
+    with open("json_fetch/config/out.json","r") as js:
+        json_report = json.load(js)
+    print(type(json_report))
+    insight_report = TreeDict(json_report)
+    insight_report.to_flatten_matrix(parsing_insight=True)
