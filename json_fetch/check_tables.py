@@ -3,7 +3,7 @@ import polars as pl
 import json
 import hashlib
 import base64
-from typing import List, Dict
+from typing import List, Dict, Union
 from collections import defaultdict
 import rich
 from pathlib import Path
@@ -12,60 +12,35 @@ COMMAND_KEY = "command"
 CHECKS_LIST_KEY = "checks"
 UID_VAR = "uid"
 
-
+# TODO: Make a parent Table for check table and Main table
 class MainTable:
     def __init__(self, table_dir: Path) -> None:
         self.main_table_path = table_dir / "MainTable.csv"
         self.table_place_holder = "deleteme"
-        self.initialize_table()
-        self.main_table =  pl.read_csv(self.main_table_path)
+        self.main_table =  pl.read_csv(self.main_table_path) if self.main_table_path.is_file() else pl.DataFrame()
 
     def update(self, new_df: pl.DataFrame):
         """Update the main dataframe with a new dataframe."""
         # \n blank line breaks csv file, replace it with \t
         new_df = new_df.with_columns(pl.col(pl.Utf8).str.replace_all("\n", "\t"))
-        # If place holder is in the current main_table file, then replace the current table with the new table
-        if self.table_place_holder in self.main_table.columns:
-            self.main_table = new_df
-        else:
-            self.main_table = pl.concat([self.main_table,new_df], how= "diagonal").unique(subset=[UID_VAR])
+        self.main_table = pl.concat([self.main_table,new_df], how= "diagonal").unique(subset=[UID_VAR])
         self.main_table.write_csv(self.main_table_path)
         return self
-    
-    def initialize_table(self):
-        """initialize a main table csv file if not exists one."""
-        if not self.main_table_path.is_file():
-            with open(self.main_table_path,"w") as t:
-                t.write(self.table_place_holder)
-
 
 class CheckTable:
     def __init__(self, table_dir: Path, check_type: str) -> None:
         self.check_table_path = (table_dir) / f"{check_type}.csv"
-        self.table_place_holder = "deleteme"
-        self.initialize_table()
-        self.main_table =  pl.read_csv(self.check_table_path)
-    
-    def initialize_table(self):
-        """initialize a check table csv file if not exists one."""
-        if not self.check_table_path.is_file():
-            with open(self.check_table_path,"w") as t:
-                t.write(self.table_place_holder)
+        self.check_table =  pl.read_csv(self.check_table_path) if self.check_table_path.is_file() else pl.DataFrame()
 
     def update(self, new_df):
         """Update the main dataframe with a new dataframe."""
-        # If place holder is in the current check_table file, then replace the current table with the new table
-        if self.table_place_holder in self.main_table.columns:
-            self.main_table = new_df
-        else:
-            self.main_table = pl.concat([self.main_table,new_df], how= "diagonal").unique()
-        self.main_table.write_csv(self.check_table_path)
+        self.check_table = pl.concat([self.check_table,new_df], how= "diagonal").unique()
+        self.check_table.write_csv(self.check_table_path)
         return self
 
-class CommandTable:
-    def __init__(self) -> None:
-        pass
-
+    def select_checks_by_uid(self,uid):
+        df_fits_uid = self.check_table.filter(pl.col(UID_VAR) == uid)
+        return df_fits_uid
 
 class TableManager:
     def __init__(self, table_path:str) -> None:
@@ -136,6 +111,61 @@ class TableManager:
         mt.update(observations_without_insight)
         rich.print("[green] successfully generates all the tables.")
     
+    def select_checks_by_uid(self, uid:str, save_csv:str = "")-> pl.DataFrame:
+        """Select all the checks sharing the same uid."""
+        found_checks_df = pl.DataFrame()
+        for check_table in self.checks_dir.iterdir():
+            if check_table.is_file() and check_table.suffix == ".csv":
+                # check_table.stem is the file name without extension
+                ct = CheckTable(self.checks_dir,check_table.stem)
+                check_df = ct.select_checks_by_uid(uid)
+                found_checks_df = pl.concat([found_checks_df, check_df],how="diagonal").unique()
+        print(found_checks_df)
+        if save_csv:
+            found_checks_df.write_csv(save_csv) 
+            rich.print(f"[green] csv file has been saved in {save_csv}")
+        return found_checks_df
+
+    def get_uids_by_column(self, column_name:str, column_value, table = "MainTable"):
+        """fetch a list of uids based on column name"""
+
+        if not isinstance(column_name,str):
+            raise TypeError(f"Column name only accepts string type")
+
+        if table == "MainTable":
+            mt = MainTable(self.table_path)
+            df = mt.main_table
+        else:
+            check_csv = self.checks_dir / f"{table}.csv"
+            # Check not found
+            if not check_csv.is_file():
+                raise ValueError(f"No such a check table called {table}")
+            ct = CheckTable(self.checks_dir, table)
+            df = ct.check_table
+        
+        # If column value is a string and the string is not purely numeric
+        if isinstance(column_value, str) and not column_value.isnumeric():
+            # Then match with regex
+            matching_rows = df.filter(pl.col(column_name).str.contains(column_value))
+
+
+        # If column value is a numeric in string type
+        elif isinstance(column_value, str) and column_value.isnumeric():
+            # Then Try best to convert data type to float
+            column_value = float(column_value)
+            # If the column is in the integer pattern e.x.: 5.00
+            # Then convert it to integer
+            if column_value.is_integer():
+                column_value = int(column_value)
+            matching_rows = df.filter(pl.col(column_name)==column_value)
+        
+        else:
+            matching_rows = df.filter(pl.col(column_name)==column_value)
+
+        uids = matching_rows[UID_VAR].to_list()
+        # Remove repeat uids
+        unique_uids = list(set(uids))
+        return unique_uids
 
 
 
@@ -214,3 +244,5 @@ if __name__ == "__main__":
     df = pl.read_csv("report.csv")
     t = TableManager("tables")
     t.append_table_from_matrix(df)
+    # uids = t.get_uids_by_column(column_name="status", column_value=True, table="Command")
+    # print(uids)
