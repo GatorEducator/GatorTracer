@@ -5,7 +5,7 @@ import hashlib
 import base64
 from typing import List, Dict
 from collections import defaultdict
-import pprint
+import rich
 from pathlib import Path
 CHECK_KEY = "check"
 COMMAND_KEY = "command"
@@ -99,27 +99,27 @@ class TableManager:
             # Generate an unique string based on the information of one row
             # To generate an uid
             row_unique_string = " ".join(str(item) for item in row_variables)
-            uid = self.generate_uid(row_unique_string)
+            uid = TableManagerHelper.generate_uid(row_unique_string)
 
             # Store the uid in the main table
-            observations_without_insight = self.update_value_in_df(
+            observations_without_insight = TableManagerHelper.update_value_in_df(
                 observations_without_insight, UID_VAR, row_idx, pl.Utf8, uid
             )
 
             insight_dict = json.loads(insights[row_idx])
-            insight_metadata, insight_checks = self.triage_checks(insight_dict)
+            insight_metadata, insight_checks = TableManagerHelper.triage_checks(insight_dict)
 
             # embed the insight metadata to the main dataframe
             for insight_info in insight_metadata:
                 inf_value = insight_metadata[insight_info]
-                observations_without_insight = self.update_value_in_df(
+                observations_without_insight = TableManagerHelper.update_value_in_df(
                     observations_without_insight,
                     insight_info,
                     row_idx,
                     pl.Int64,
                     inf_value,
                 )
-            # Append the check dicts to name-based check tables
+            # Append the check dicts of insight to name-based check tables
             for check_type in insight_checks:
                 ct = CheckTable(self.checks_dir, check_type)
                 for one_check in insight_checks[check_type]:
@@ -130,13 +130,32 @@ class TableManager:
                     # Add insight uid to the check
                     one_check[UID_VAR] = uid
                     ct.update(pl.DataFrame(one_check)) 
-
+        rich.print("MainTable: \n")
         print(observations_without_insight)
         mt = MainTable(self.table_path)
         mt.update(observations_without_insight)
-        # TODO: parse insight_checks to the sub tables tmr
+        rich.print("[green] successfully generates all the tables.")
+    
 
-    def triage_checks(self, insight: Dict):
+
+
+class TableManagerHelper:
+    @staticmethod
+    def generate_uid( info: str):
+        """generate a string uid from a string."""
+        # Hash the row string using MD5
+        md5_hash = hashlib.md5(info.encode())
+
+        # A message digest is a cryptographic hash function containing a string of digits
+        digest = md5_hash.digest()
+
+        encoded_id = base64.b64encode(digest)
+        short_id = encoded_id.decode()
+        return short_id
+
+    
+    @staticmethod
+    def triage_checks(insight: Dict):
         def flatten_check(dic):
             """recursively fetch key none_dict pairs to an one-dimension dictionary."""
             flattened_pairs = {}
@@ -172,23 +191,12 @@ class TableManager:
 
                     elif COMMAND_KEY in flattened_check:
                         # promote check type to higher level
-                        checks_dict[COMMAND_KEY.upper()].append(flattened_check)
+                        checks_dict[COMMAND_KEY.capitalize()].append(flattened_check)
         return file_level_inf, checks_dict
 
-    def generate_uid(self, info: str):
-        """generate a string uid from a string."""
-        # Hash the row string using MD5
-        md5_hash = hashlib.md5(info.encode())
-
-        # A message digest is a cryptographic hash function containing a string of digits
-        digest = md5_hash.digest()
-
-        encoded_id = base64.b64encode(digest)
-        short_id = encoded_id.decode()
-        return short_id
-
+    @staticmethod
     def update_value_in_df(
-        self, df: pl.DataFrame, column_name, row_idx, pl_dtype, new_value
+        df: pl.DataFrame, column_name, row_idx, pl_dtype, new_value
     ) -> pl.DataFrame:
         """Update value in a df. If the column doesn't exist, automatically generate one."""
         # If no such an column exists in df, then generate a null column with this column
