@@ -3,7 +3,7 @@ import polars as pl
 import json
 import hashlib
 import base64
-from typing import List, Dict, Union
+from typing import List, Dict, Union, Type
 from collections import defaultdict
 import rich
 from pathlib import Path
@@ -11,6 +11,10 @@ CHECK_KEY = "check"
 COMMAND_KEY = "command"
 CHECKS_LIST_KEY = "checks"
 UID_VAR = "uid"
+DTYPE_REF = {"str": pl.Utf8,
+"int": pl.Int64,
+"float": pl.Float64}
+
 
 # TODO: Make a parent Table for check table and Main table
 class MainTable:
@@ -78,7 +82,7 @@ class TableManager:
 
             # Store the uid in the main table
             observations_without_insight = TableManagerHelper.update_value_in_df(
-                observations_without_insight, UID_VAR, row_idx, pl.Utf8, uid
+                observations_without_insight, UID_VAR, row_idx, type(uid), uid
             )
 
             insight_dict = json.loads(insights[row_idx])
@@ -91,7 +95,7 @@ class TableManager:
                     observations_without_insight,
                     insight_info,
                     row_idx,
-                    pl.Int64,
+                    type(insight_info),
                     inf_value,
                 )
             # Append the check dicts of insight to name-based check tables
@@ -128,7 +132,7 @@ class TableManager:
 
     def get_uids_by_column(self, column_name:str, column_value, table = "MainTable"):
         """fetch a list of uids based on column name"""
-
+        # TODO: get uids across tables
         if not isinstance(column_name,str):
             raise TypeError(f"Column name only accepts string type")
 
@@ -167,8 +171,16 @@ class TableManager:
         unique_uids = list(set(uids))
         return unique_uids
 
+    def get_table(self, table_name = "MainTable"):
+        """Get a table dataframe."""
+        if table_name == "MainTable":
+            return MainTable(self.table_path).main_table
+        else:
+            return CheckTable(self.checks_dir,table_name).check_table
 
-
+    
+    def get_insight_row_w_uid(self):
+        pass
 class TableManagerHelper:
     @staticmethod
     def generate_uid( info: str):
@@ -226,10 +238,13 @@ class TableManagerHelper:
 
     @staticmethod
     def update_value_in_df(
-        df: pl.DataFrame, column_name, row_idx, pl_dtype, new_value
+        df: pl.DataFrame, column_name, row_idx, input_date_type: Type, new_value
     ) -> pl.DataFrame:
         """Update value in a df. If the column doesn't exist, automatically generate one."""
         # If no such an column exists in df, then generate a null column with this column
+
+        # Find related polars data type from input_data_type
+        pl_dtype = DTYPE_REF[input_date_type.__name__]
         if column_name not in df.columns:
             df = df.with_columns(pl.lit(None).alias(column_name).cast(pl_dtype))
 
