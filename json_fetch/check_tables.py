@@ -3,7 +3,7 @@ import polars as pl
 import json
 import hashlib
 import base64
-from typing import List, Dict, Union, Type
+from typing import List, Dict, Union, Type, Tuple
 from collections import defaultdict
 import rich
 from pathlib import Path
@@ -11,6 +11,7 @@ CHECK_KEY = "check"
 COMMAND_KEY = "command"
 CHECKS_LIST_KEY = "checks"
 UID_VAR = "uid"
+MAIN_TABLE_NAME = "MainTable"
 DTYPE_REF = {"str": pl.Utf8,
 "int": pl.Int64,
 "float": pl.Float64}
@@ -19,31 +20,31 @@ DTYPE_REF = {"str": pl.Utf8,
 # TODO: Make a parent Table for check table and Main table
 class MainTable:
     def __init__(self, table_dir: Path) -> None:
-        self.main_table_path = table_dir / "MainTable.csv"
+        self.main_table_path = table_dir / f"{MAIN_TABLE_NAME}.csv"
         self.table_place_holder = "deleteme"
-        self.main_table =  pl.read_csv(self.main_table_path) if self.main_table_path.is_file() else pl.DataFrame()
+        self.df =  pl.read_csv(self.main_table_path) if self.main_table_path.is_file() else pl.DataFrame()
 
     def update(self, new_df: pl.DataFrame):
         """Update the main dataframe with a new dataframe."""
         # \n blank line breaks csv file, replace it with \t
         new_df = new_df.with_columns(pl.col(pl.Utf8).str.replace_all("\n", "\t"))
-        self.main_table = pl.concat([self.main_table,new_df], how= "diagonal").unique(subset=[UID_VAR])
-        self.main_table.write_csv(self.main_table_path)
+        self.df = pl.concat([self.df,new_df], how= "diagonal").unique(subset=[UID_VAR])
+        self.df.write_csv(self.main_table_path)
         return self
 
 class CheckTable:
     def __init__(self, table_dir: Path, check_type: str) -> None:
         self.check_table_path = (table_dir) / f"{check_type}.csv"
-        self.check_table =  pl.read_csv(self.check_table_path) if self.check_table_path.is_file() else pl.DataFrame()
+        self.df =  pl.read_csv(self.check_table_path) if self.check_table_path.is_file() else pl.DataFrame()
 
     def update(self, new_df):
         """Update the main dataframe with a new dataframe."""
-        self.check_table = pl.concat([self.check_table,new_df], how= "diagonal").unique()
-        self.check_table.write_csv(self.check_table_path)
+        self.df = pl.concat([self.df,new_df], how= "diagonal").unique()
+        self.df.write_csv(self.check_table_path)
         return self
 
     def select_checks_by_uid(self,uid):
-        df_fits_uid = self.check_table.filter(pl.col(UID_VAR) == uid)
+        df_fits_uid = self.df.filter(pl.col(UID_VAR) == uid)
         return df_fits_uid
 
 class TableManager:
@@ -51,7 +52,8 @@ class TableManager:
         self.table_path = Path(table_path)
         self.checks_dir = self.table_path / Path("CheckTables")
         self.initialize_table_path()
-
+        self.tables = TableManagerHelper.load_existing_tables(self.table_path)
+        
     def initialize_table_path(self):
         if self.checks_dir.is_dir():
             pass
@@ -101,6 +103,8 @@ class TableManager:
             # Append the check dicts of insight to name-based check tables
             for check_type in insight_checks:
                 ct = CheckTable(self.checks_dir, check_type)
+                # Record CheckTable instance
+                self.tables[check_type] = ct
                 for one_check in insight_checks[check_type]:
                     # replace all the line breaks
                     for k in one_check:
@@ -112,6 +116,7 @@ class TableManager:
         rich.print("MainTable: \n")
         print(observations_without_insight)
         mt = MainTable(self.table_path)
+        self.tables[MAIN_TABLE_NAME] = mt
         mt.update(observations_without_insight)
         rich.print("[green] successfully generates all the tables.")
     
@@ -132,20 +137,19 @@ class TableManager:
 
     def get_uids_by_column(self, column_name:str, column_value, table = "MainTable"):
         """fetch a list of uids based on column name"""
-        # TODO: get uids across tables
         if not isinstance(column_name,str):
             raise TypeError(f"Column name only accepts string type")
 
-        if table == "MainTable":
+        if table == MAIN_TABLE_NAME:
             mt = MainTable(self.table_path)
-            df = mt.main_table
+            df = mt.df
         else:
             check_csv = self.checks_dir / f"{table}.csv"
             # Check not found
             if not check_csv.is_file():
                 raise ValueError(f"No such a check table called {table}")
             ct = CheckTable(self.checks_dir, table)
-            df = ct.check_table
+            df = ct.df
         
         # If column value is a string and the string is not purely numeric
         if isinstance(column_value, str) and not column_value.isnumeric():
@@ -170,20 +174,21 @@ class TableManager:
         # Remove repeat uids
         unique_uids = list(set(uids))
         return unique_uids
-
-    def get_table(self, table_name = "MainTable"):
+    def get_uids_by_cloumn_across_tables(self, column_name: str, column_value):
+        column_name
+    def get_table(self, table_name = MAIN_TABLE_NAME):
         """Get a table dataframe."""
-        if table_name == "MainTable":
-            return MainTable(self.table_path).main_table
+        if table_name == MAIN_TABLE_NAME:
+            return MainTable(self.table_path).df
         else:
-            return CheckTable(self.checks_dir,table_name).check_table
+            return CheckTable(self.checks_dir,table_name).df
 
     
     def get_insight_row_w_uid(self):
         pass
 class TableManagerHelper:
     @staticmethod
-    def generate_uid( info: str):
+    def generate_uid(info: str):
         """generate a string uid from a string."""
         # Hash the row string using MD5
         md5_hash = hashlib.md5(info.encode())
@@ -195,7 +200,33 @@ class TableManagerHelper:
         short_id = encoded_id.decode()
         return short_id
 
-    
+    @staticmethod
+    def load_existing_tables(path: Path)-> List[Tuple[Path,str]]:
+        """Load all the tables to a dictionary of dataframe under the current directory and sub-directories."""
+
+        table_dir = {}
+        # Create a Path object for the directory
+
+        # Get a list of all files in the directory and its subdirectories
+        files_and_dirs = list(path.glob("**/*"))
+        # Filter out directories from the list
+        # Get table files
+        table_paths = [file for file in files_and_dirs if file.is_file() and file.suffix == ".csv"]
+        # Convert Path objects to string paths
+        table_dir_file_pairs = [ (file.parent,file.stem) for file in table_paths]
+
+        for dir_file_pair in table_dir_file_pairs:
+            dir_path = dir_file_pair[0]
+            file_name = dir_file_pair[1]
+            if file_name == MAIN_TABLE_NAME:
+                table_dir[file_name] = MainTable(dir_path)
+            else:
+                table_dir[file_name] = CheckTable(dir_path,file_name)
+        
+        return table_dir
+
+
+
     @staticmethod
     def triage_checks(insight: Dict):
         def flatten_check(dic):
@@ -258,6 +289,7 @@ if __name__ == "__main__":
 
     df = pl.read_csv("report.csv")
     t = TableManager("tables")
-    t.append_table_from_matrix(df)
+    # t.append_table_from_matrix(df)
     # uids = t.get_uids_by_column(column_name="status", column_value=True, table="Command")
     # print(uids)
+    print(t.tables["MainTable"])
