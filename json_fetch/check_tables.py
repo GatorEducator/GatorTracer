@@ -35,6 +35,13 @@ class MainTable:
         self.df.write_csv(self.main_table_path)
         return self
 
+    def get_reports_by_uids(self, uids:List[str]):
+        """return a list of insight rows by uids."""
+        matchings = pl.DataFrame()
+        for uid in uids:
+            matchings = pl.concat([self.df.filter(pl.col(UID_VAR == uid)), matchings])
+
+        return matchings
 
 class CheckTable:
     def __init__(self, table_dir: Path, check_type: str) -> None:
@@ -54,6 +61,14 @@ class CheckTable:
     def select_checks_by_uid(self, uid):
         df_fits_uid = self.df.filter(pl.col(UID_VAR) == uid)
         return df_fits_uid
+
+    def get_checks_by_uids(self, uids:List[str]):
+        """return a list of insight rows by uids."""
+        matchings = pl.DataFrame()
+        for uid in uids:
+            matchings = pl.concat([self.df.filter(pl.col(UID_VAR == uid)), matchings])
+
+        return matchings
 
 
 class TableManager:
@@ -152,9 +167,9 @@ class TableManager:
             rich.print(f"[green] csv file has been saved in {save_csv}")
         return found_checks_df
 
-    def get_uids_by_column(self, column_name: str, column_value, table="MainTable"):
-        """fetch a list of uids based on column name in one table"""
-        if not isinstance(column_name, str):
+    def get_checks_by_attribute_one_table(self, attribute: str, attribute_value, with_report, table="MainTable"):
+        """Get matching checks in a specific table."""
+        if not isinstance(attribute, str):
             raise TypeError(f"Column name only accepts string type")
 
         if table == MAIN_TABLE_NAME:
@@ -168,46 +183,52 @@ class TableManager:
             ct = self.tables[table]
             df = ct.df
 
+        # Skip if column name not found to escape ColumnNotFoundError
+        if attribute not in df.columns:
+            return pl.DataFrame()
+
         # If column value is a string and the string is not purely numeric
-        if isinstance(column_value, str) and not column_value.isnumeric():
+        if isinstance(attribute_value, str) and not attribute_value.isnumeric():
             # Then match with regex
-            matching_rows = df.filter(pl.col(column_name).str.contains(column_value))
+            matching_rows = df.filter(pl.col(attribute).str.contains(attribute_value))
 
         # If column value is a numeric in string type
-        elif isinstance(column_value, str) and column_value.isnumeric():
+        elif isinstance(attribute_value, str) and attribute_value.isnumeric():
             # Then Try best to convert data type to float
-            column_value = float(column_value)
+            attribute_value = float(attribute_value)
             # If the column is in the integer pattern e.x.: 5.00
             # Then convert it to integer
-            if column_value.is_integer():
-                column_value = int(column_value)
-            matching_rows = df.filter(pl.col(column_name) == column_value)
-
+            if attribute_value.is_integer():
+                attribute_value = int(attribute_value)
+            matching_rows = df.filter(pl.col(attribute) == attribute_value)
         else:
-            matching_rows = df.filter(pl.col(column_name) == column_value)
+            matching_rows = df.filter(pl.col(attribute) == attribute_value)
 
-        uids = matching_rows[UID_VAR].to_list()
-        # Remove repeat uids
-        unique_uids = list(set(uids))
-        return unique_uids
+        return matching_rows
 
-    def get_uids_by_cloumn_across_tables(self, column_name: str, column_value):
+    def get_checks_by_attribute_across_tables(self, attribute: str, attribute_value, with_report):
+        """Get matching checks across tables."""
         target_uids = []
-        for existing_table_name in self.tables:
-            target_uids_in_one_table = self.get_uids_by_column(column_name, column_value, existing_table_name)
-            target_uids.extend(target_uids_in_one_table)
-        # return unique matching uids
-        return list(set(target_uids))
+        check_type_col_name = "check type"
+        check_df = pl.DataFrame({check_type_col_name: pl.Series([], dtype=pl.Utf8),})
+        for table_name in self.tables:
+            checks_in_one_table = self.get_checks_by_attribute_one_table(attribute, attribute_value, table_name)
+            # ignore empty dataframe
+            if checks_in_one_table.is_empty():
+                continue
+            # Tag check type to the df generated from on table
+            checks_in_one_table = checks_in_one_table.with_columns(pl.lit(table_name).alias(check_type_col_name).cast(pl.Utf8))
+
+            check_df = pl.concat([check_df, checks_in_one_table], how = "diagonal")
+        # all the matching checks across tables
+        return check_df
 
     def get_table(self, table_name=MAIN_TABLE_NAME):
         """Get a table dataframe."""
         if table_name == MAIN_TABLE_NAME:
-            return MainTable(self.table_path).df
+            return self.tables[table_name].df
         else:
-            return CheckTable(self.checks_dir, table_name).df
-
-    def get_insight_row_w_uid(self):
-        pass
+            return self.tables[table_name].df
 
 
 class TableManagerHelper:
@@ -296,12 +317,6 @@ class TableManagerHelper:
         df: pl.DataFrame, column_name, row_idx, input_date_type: Type, new_value
     ) -> pl.DataFrame:
         """Update value in a df. If the column doesn't exist, automatically generate one."""
-        if type(new_value) == str and new_value.isnumeric():
-            input_date_type = float
-        
-        if input_date_type == float and isinstance(new_value, int):
-            input_date_type = int
-
         # Find related polars data type from input_data_type
         pl_dtype = DTYPE_REF[input_date_type.__name__]
         # If no such an column exists in df, then generate a null column with this column
@@ -312,12 +327,13 @@ class TableManagerHelper:
         df[row_idx, column_name] = new_value
         return df
 
-
 if __name__ == "__main__":
     # m = MainTable(".")
 
     df = pl.read_csv("report.csv")
     t = TableManager("tables")
-    t.append_table_from_matrix(df)
-    uids = t.get_uids_by_column(column_name="status", column_value=True, table="Command")
-    # print(uids)
+    a = t.get_table("MainTable")
+    print(a)
+    # checks = t.get_checks_by_attribute_across_tables(attribute="objective", attribute_value="meet minimal")
+    # print(checks)
+    # checks.write_csv("wow.csv")
