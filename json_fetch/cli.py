@@ -1,12 +1,14 @@
 """Official CLI."""
-import typer
-from config_console import Token, ConfigJson
-from typing_extensions import Annotated
-from json_fetch import JsonFetch
-from pathlib import Path
-from pprintjson import pprintjson
 import json
+from pathlib import Path
+
 import pandas as pd
+import typer
+from config_console import *
+from pprintjson import pprintjson
+from typing_extensions import Annotated
+
+from json_fetch import JsonFetch
 
 cli = typer.Typer()
 EXCLUDED_JSON = Path(__file__).parent.resolve() / "config" / "exclude.json"
@@ -35,7 +37,10 @@ def saved_token(
         gh_token.set_token(save)
         print("Token has been saved")
     if verify:
-        print(gh_token.token_exists())
+        if gh_token.token_exists():
+            print("Saved token exists")
+        else:
+            print("No saved token exists")
 
 
 @cli.command()
@@ -141,7 +146,6 @@ def js_fetch(
         False, "--all", "-a", help="fetch all the json files in the target directory"
     ),
 ):
-    print(file_re)
     token_value = ""
     while token not in "sStT":
         token = input("please select S (saved token) or T (temporary token): ")
@@ -169,7 +173,6 @@ def js_fetch(
             included_dict["organization"],
             included_dict["repository"],
         )
-        print(included_org)
         ex_in = (included_org, included_repo, excluded_org, excluded_repo)
         json_fetch_handler = JsonFetch(token=token_value, instructions=ex_in)
         insight_tree = json_fetch_handler.get_insight_jsons(
