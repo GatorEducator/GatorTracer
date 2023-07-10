@@ -11,7 +11,7 @@ from typing_extensions import Annotated
 from json_fetch import JsonFetch
 
 cli = typer.Typer()
-EXCLUDED_JSON,INCLUDED_JSON = "exclude.json", "include.json"
+EXCLUDED_JSON, INCLUDED_JSON = "exclude.json", "include.json"
 
 
 @cli.command()
@@ -184,11 +184,13 @@ def js_fetch(
         df = pl.DataFrame(insight_matrix[1:], columns=insight_matrix[0])
         df.to_csv("report.csv", header=True)
 
+
 @cli.callback()
 def initialize_app():
     """User who access to this app."""
     cfg_path = ConfigPath()
     cfg_path.initialize_config_path()
+
 
 if __name__ == "__main__":
     cli()
