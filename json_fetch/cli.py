@@ -11,8 +11,7 @@ from typing_extensions import Annotated
 from json_fetch import JsonFetch
 
 cli = typer.Typer()
-EXCLUDED_JSON = Path(__file__).parent.resolve() / "config" / "exclude.json"
-INCLUDED_JSON = Path(__file__).parent.resolve() / "config" / "include.json"
+EXCLUDED_JSON,INCLUDED_JSON = "exclude.json", "include.json"
 
 
 @cli.command()
@@ -95,15 +94,15 @@ def config(
         pprintjson(ex_config.parse_json())
 
     if clear_all:
-        in_config.default_json({})
-        ex_config.default_json({})
+        in_config.default_json()
+        ex_config.default_json()
 
     if clear_in:
         # TODO: preserve key organization and repo
-        in_config.default_json({})
+        in_config.default_json()
 
     if clear_ex:
-        ex_config.default_json({})
+        ex_config.default_json()
 
     if in_from_file:
         source_file = Path(in_from_file)
