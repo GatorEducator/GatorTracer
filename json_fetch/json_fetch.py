@@ -107,12 +107,6 @@ class JsonFetch:
                 )
         return files_dict
 
-    def fetch_latest_json(self, dir):
-        """Fetch the latest generated json associated with its name."""
-        # TODO: should only support the files generated in the format of date
-        # TODO: make it a plugin
-        pass
-
 
 class TreeDict:
     """A nested dictionary."""
@@ -160,7 +154,9 @@ class TreeDict:
 
         flatten(self.__nested_dict)
         matrix_with_title = [title] + rows
+        print("⭐ flat matrix was built successfully")
         return matrix_with_title
+
 
 if __name__ == "__main__":
     with open("json_fetch/config/out.json", "r") as js:
