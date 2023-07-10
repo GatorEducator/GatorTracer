@@ -5,7 +5,7 @@ import re
 from pathlib import Path
 from typing import Dict, List, Pattern, Tuple
 
-import pandas as pd
+import polars as pl
 from config_console import Token
 from github import Github, Organization, Repository
 
@@ -140,9 +140,8 @@ class TreeDict:
         self, matrix_with_header: List[List]
     ) -> List[List]:
         """Call function to get parsed nested list insights and put them into the matrix."""
-        main_df = pd.DataFrame(matrix_with_header[1:], columns=matrix_with_header[0])
+        main_df = pl.DataFrame(matrix_with_header[1:], columns=matrix_with_header[0])
         insights = main_df["insight"]
-        print(insights)
         del main_df["insight"]
         for insight_idx in range(len(insights)):
             insight_str = insights[insight_idx]
