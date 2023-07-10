@@ -2,7 +2,7 @@
 import json
 from pathlib import Path
 
-import pandas as pd
+import polars as pl
 import typer
 from config_console import *
 from pprintjson import pprintjson
@@ -144,6 +144,9 @@ def js_fetch(
     all_insights: bool = typer.Option(
         False, "--all", "-a", help="fetch all the json files in the target directory"
     ),
+    parse_insight: bool = typer.Option(
+        False, "--parse-insight", "-p", help="parsing insight checks to output matrix"
+    ),
 ):
     token_value = ""
     while token not in "sStT":
@@ -177,12 +180,15 @@ def js_fetch(
         insight_tree = json_fetch_handler.get_insight_jsons(
             dir=dir, branch=branch, file_regex=file_re
         )
-        insight_matrix = insight_tree.to_flatten_matrix()
-        print(insight_matrix)
-        df = pd.DataFrame(insight_matrix[1:], columns=insight_matrix[0])
-        csv_format = df.to_csv("report.csv", header=True)
-        print(df)
+        insight_matrix = insight_tree.to_flatten_matrix(parse_insight)
+        df = pl.DataFrame(insight_matrix[1:], columns=insight_matrix[0])
+        df.to_csv("report.csv", header=True)
 
+@cli.callback()
+def initialize_app():
+    """User who access to this app."""
+    cfg_path = ConfigPath()
+    cfg_path.initialize_config_path()
 
 if __name__ == "__main__":
     cli()
