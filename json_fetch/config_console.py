@@ -117,10 +117,12 @@ class ConfigJson:
 
         return out
 class ConfigPath:
+    # TODO: find a good place to save the user. like: env, class variable
+    user = ""
     def __init__(self) -> None:
         self.app_name = "GatorTracer"
-        self.author = "Yanqiao Chen"
-        self.config_dir = user_config_dir(self.app_name,self.author) 
+        # author_app equals to app_name if not specified
+        self.config_dir = user_config_dir(self.app_name) 
         # key -> dirs, value -> list of config files
         # file -> string, folder -> sub_dict
         self.config_files_tree: Dict[List[str]] = {"fetch_scope":["exclude.json", "include.json"],
@@ -131,10 +133,10 @@ class ConfigPath:
     def initialize_config_path(self):
 
         main_config_path = Path(self.config_dir)
-
+        
         # make directory of config path
         if not main_config_path.is_dir():
-            main_config_path.mkdir()
+            main_config_path.mkdir(parents=True)
             print(f"📁 Initializing user config directory {main_config_path}")
 
         # make sub files in the sub folders from main config path
