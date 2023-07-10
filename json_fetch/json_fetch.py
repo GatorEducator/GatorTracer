@@ -125,50 +125,9 @@ class TreeDict:
         """return the nested_dictionary"""
         return str(self.__nested_dict)
 
-    def to_flatten_matrix(self, parsing_insight: bool) -> List[List]:
-        """Convert nested dictionary to matrix."""
-        file_lvl_matrix = self.flatten_matrix_without_parsing_insight_json()
-        if not parsing_insight:
-            return file_lvl_matrix
-        else:
-            file_lvl_matrix_w_parsed_insight = self.matrix_with_flatten_insight_json(
-                file_lvl_matrix
-            )
-            return file_lvl_matrix_w_parsed_insight
-
-    def matrix_with_flatten_insight_json(
-        self, matrix_with_header: List[List]
-    ) -> List[List]:
-        """Call function to get parsed nested list insights and put them into the matrix."""
-        main_df = pl.DataFrame(matrix_with_header[1:], columns=matrix_with_header[0])
-        insights = main_df["insight"]
-        del main_df["insight"]
-        for insight_idx in range(len(insights)):
-            insight_str = insights[insight_idx]
-            # load the content of insight in json format
-            insight_dict = json.loads(insight_str)
-            insight_w_header = InsightReport(insight_dict).to_array_with_header()
-            # Get all checks state
-            insight_headers = insight_w_header[0]
-            insight_values = insight_w_header[1]
-
-            # Find matching headers in the main df
-            for i in range(len(insight_headers)):
-                insight_header = insight_headers[i]
-                # If fails to find one then create an empty one column with the insight header
-                if insight_header not in main_df.columns:
-                    main_df[insight_header] = None
-
-                main_df.loc[insight_idx, insight_header] = insight_values[i]
-        # nested list without header
-        matrix_w_parsed_insight = main_df.values.tolist()
-        header = list(main_df.columns)
-        # insert header to the first row
-        matrix_w_parsed_insight.insert(0, header)
-        return matrix_w_parsed_insight
-
-    def flatten_matrix_without_parsing_insight_json(self) -> List[List]:
+    def to_flatten_matrix(self) -> List[List]:
         """Flatten the nested dictionary based on the leaf and put into matrix."""
+        print("🚀 Converting nested dictionary to a flat matrix.")
         rows = []
         title = []
 
@@ -186,7 +145,7 @@ class TreeDict:
                     keys_to_list.append(k)
                     found_list = True
                 else:
-                    pass  # TODO: currently assume there is no other types
+                    pass  # currently assume there is no other types
             # Base case: there is no more sub-dictionary
             if not found_list:
                 v = copy.deepcopy(values)
@@ -202,64 +161,6 @@ class TreeDict:
         flatten(self.__nested_dict)
         matrix_with_title = [title] + rows
         return matrix_with_title
-
-
-class InsightReport:
-    def __init__(self, insight_dict: Dict) -> None:
-        self.insight_dict = insight_dict
-
-    def to_array_with_header(self) -> List[List]:
-        array_w_header = [[], []]
-
-        # Add percentage_score and amount_correct
-
-        array_w_header[0].extend(["passing_percentage", "amount_correct"])
-        # Convert a percentage score string to a decimal percentage ex: "53" to 0.53
-        passing_percentage = "{0:.2f}".format(
-            int(self.insight_dict["percentage_score"]) * 0.01
-        )
-        array_w_header[1].append(
-            passing_percentage
-        ) if "percentage_score" in self.insight_dict else array_w_header[1].append(None)
-        array_w_header[1].append(
-            int(self.insight_dict["amount_correct"])
-        ) if "amount_correct" in self.insight_dict else array_w_header[1].append(None)
-
-        checks = dict()
-        for check in self.insight_dict["checks"]:
-            if "check" in check:
-                check_type = check["check"]
-            elif "command" in check:
-                # TODO: doesn't support command now as the wide variety of the command types like lint, running correctly and etc
-                # TODO: maybe we should add tag to the command to standardize them
-                pass
-            else:
-                pass
-
-            # distinguish the checks with different fragments. e.x.: MatchFileFragment_TODO isn't the same with MatchFileFragment_NAME
-            if "options" in check and "fragment" in check["options"]:
-                check_type += "_" + str(check["options"]["fragment"])
-
-            # implement AND logic. If multi checks have the same check type. Pass True iff all the status is True
-            if check_type not in checks:
-                checks[check_type] = check["status"]
-
-            # as long as one of the checks with the same type is False, then the check type should be False
-            elif checks[check_type] == True and check["status"] == False:
-                checks[check_type] = False
-            else:
-                # Don't change anything in other cases
-                pass
-
-        header_bool_pair = list(checks.items())
-        for pair in header_bool_pair:
-            header = pair[0]
-            pass_state = pair[1]
-            array_w_header[0].append(header)
-            array_w_header[1].append(pass_state)
-
-        return array_w_header
-
 
 if __name__ == "__main__":
     with open("json_fetch/config/out.json", "r") as js:
