@@ -1,12 +1,13 @@
 """Generate tables for each type of check plus a main table."""
-import polars as pl
-import json
-import hashlib
 import base64
-from typing import List, Dict, Union, Type, Tuple
+import hashlib
+import json
 from collections import defaultdict
-import rich
 from pathlib import Path
+from typing import Dict, List, Tuple, Type, Union
+
+import polars as pl
+import rich
 
 CHECK_KEY = "check"
 COMMAND_KEY = "command"
@@ -35,13 +36,14 @@ class MainTable:
         self.df.write_csv(self.main_table_path)
         return self
 
-    def get_reports_by_uids(self, uids:List[str]):
+    def get_reports_by_uids(self, uids: List[str]):
         """return a list of insight rows by uids."""
         matchings = pl.DataFrame()
         for uid in uids:
             matchings = pl.concat([self.df.filter(pl.col(UID_VAR == uid)), matchings])
 
         return matchings
+
 
 class CheckTable:
     def __init__(self, table_dir: Path, check_type: str) -> None:
@@ -62,7 +64,7 @@ class CheckTable:
         df_fits_uid = self.df.filter(pl.col(UID_VAR) == uid)
         return df_fits_uid
 
-    def get_checks_by_uids(self, uids:List[str]):
+    def get_checks_by_uids(self, uids: List[str]):
         """return a list of insight rows by uids."""
         matchings = pl.DataFrame()
         for uid in uids:
@@ -76,7 +78,9 @@ class TableManager:
         self.table_path = Path(table_path)
         self.checks_dir = self.table_path / Path("CheckTables")
         self.initialize_table_path()
-        self.tables = TableManagerHelper.load_existing_tables(self.table_path)
+        self.tables: Union[
+            MainTable, CheckTable
+        ] = TableManagerHelper.load_existing_tables(self.table_path)
 
     def initialize_table_path(self):
         if self.checks_dir.is_dir():
@@ -86,12 +90,11 @@ class TableManager:
 
     def append_table_from_matrix(self, observations_w_header: pl.DataFrame):
         """Append items into the target tables based on a matrix where insights are not parsed yet."""
-
+        print("🚀 Adding new matrix to tables....")
         row_amount = observations_w_header.height
         # Fetch all the insights and drop them from dataframe
         insights = observations_w_header["insight"]
         observations_without_insight = observations_w_header.drop(["insight"])
-
         # iterate over each insight row as a single observation
         for row_idx in range(row_amount):
             # Fetch all the variables of one row without insight
@@ -148,7 +151,7 @@ class TableManager:
         mt = MainTable(self.table_path)
         self.tables[MAIN_TABLE_NAME] = mt
         mt.update(observations_without_insight)
-        rich.print("[green] successfully generates all the tables.")
+        rich.print(f"[green] successfully updated or generate all the tables under path: {self.table_path}.")
 
     def select_checks_by_uid(self, uid: str, save_csv: str = "") -> pl.DataFrame:
         """Select all the checks sharing the same uid."""
@@ -167,21 +170,23 @@ class TableManager:
             rich.print(f"[green] csv file has been saved in {save_csv}")
         return found_checks_df
 
-    def get_checks_by_attribute_one_table(self, attribute: str, attribute_value, with_report, table="MainTable"):
+    def get_checks_by_attribute_one_table(
+        self, attribute: str, attribute_value, with_report=False, table="MainTable"
+    ):
         """Get matching checks in a specific table."""
         if not isinstance(attribute, str):
             raise TypeError(f"Column name only accepts string type")
 
         if table == MAIN_TABLE_NAME:
             mt = self.tables[table]
-            df = mt.df
+            df: pl.DataFrame = mt.df
         else:
             check_csv = self.checks_dir / f"{table}.csv"
             # Check not found
             if not check_csv.is_file():
                 raise ValueError(f"No such a check table called {table}")
             ct = self.tables[table]
-            df = ct.df
+            df: pl.DataFrame = ct.df
 
         # Skip if column name not found to escape ColumnNotFoundError
         if attribute not in df.columns:
@@ -204,22 +209,66 @@ class TableManager:
         else:
             matching_rows = df.filter(pl.col(attribute) == attribute_value)
 
+        # Concatenate the row of insight report with check rows
+        if with_report:
+            # Use uid to find all the report rows in main table
+            main_table: pl.DataFrame = self.tables[MAIN_TABLE_NAME].df
+
+            # Drop the index column if exists one
+            main_table = main_table.drop("") if "" in main_table.columns else main_table
+            uids = matching_rows[UID_VAR].to_list()
+            reports = pl.DataFrame()
+            # Find the matching rows associated with uid
+            for uid in uids:
+                row_matching_uid = main_table.filter(pl.col(UID_VAR) == uid)
+                # Matching df should be one row, as uid is unique each row
+                if row_matching_uid.height != 1:
+                    raise ValueError(
+                        "more than one reports share the same unique identifier!"
+                    )
+
+                # record all the reports
+                # uid exists both main table and check table, drop one to avoid conflict
+                reports = pl.concat(
+                    [reports, row_matching_uid.drop(UID_VAR)], how="vertical"
+                )
+
+            # uid column exists both dataframes
+            matching_rows_w_reports = pl.concat(
+                [matching_rows, reports], how="horizontal"
+            )
+            return matching_rows_w_reports
         return matching_rows
 
-    def get_checks_by_attribute_across_tables(self, attribute: str, attribute_value, with_report):
-        """Get matching checks across tables."""
-        target_uids = []
+    def get_checks_by_attribute_across_tables(
+        self, attribute: str, attribute_value, with_report=False
+    ):
+        """Get matching checks across tables.
+
+        Args:
+            attribute: the attribute name. e.g.: status
+            attribute_value: the selected attribute value associated with attribute. e.g.: True
+            with_report: glue checks with its insight report file information
+        """
         check_type_col_name = "check type"
-        check_df = pl.DataFrame({check_type_col_name: pl.Series([], dtype=pl.Utf8),})
+        check_df = pl.DataFrame(
+            {
+                check_type_col_name: pl.Series([], dtype=pl.Utf8),
+            }
+        )
         for table_name in self.tables:
-            checks_in_one_table = self.get_checks_by_attribute_one_table(attribute, attribute_value, table_name)
+            checks_in_one_table = self.get_checks_by_attribute_one_table(
+                attribute, attribute_value, with_report=with_report, table=table_name
+            )
             # ignore empty dataframe
             if checks_in_one_table.is_empty():
                 continue
             # Tag check type to the df generated from on table
-            checks_in_one_table = checks_in_one_table.with_columns(pl.lit(table_name).alias(check_type_col_name).cast(pl.Utf8))
+            checks_in_one_table = checks_in_one_table.with_columns(
+                pl.lit(table_name).alias(check_type_col_name).cast(pl.Utf8)
+            )
 
-            check_df = pl.concat([check_df, checks_in_one_table], how = "diagonal")
+            check_df = pl.concat([check_df, checks_in_one_table], how="diagonal")
         # all the matching checks across tables
         return check_df
 
@@ -327,13 +376,16 @@ class TableManagerHelper:
         df[row_idx, column_name] = new_value
         return df
 
+
 if __name__ == "__main__":
     # m = MainTable(".")
 
     df = pl.read_csv("report.csv")
     t = TableManager("tables")
+    # a = t.append_table_from_matrix(df)
     a = t.get_table("MainTable")
-    print(a)
-    # checks = t.get_checks_by_attribute_across_tables(attribute="objective", attribute_value="meet minimal")
-    # print(checks)
-    # checks.write_csv("wow.csv")
+    checks = t.get_checks_by_attribute_across_tables(
+        attribute="objective", attribute_value="meet minimal", with_report=True
+    )
+    print(checks)
+    checks.write_csv("wow.csv")
