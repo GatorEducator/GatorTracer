@@ -126,9 +126,6 @@ class ConfigJson:
 
 
 class ConfigPath:
-    # TODO: find a good place to save the user. like: env, class variable
-    user = ""
-
     def __init__(self) -> None:
         self.app_name = "GatorTracer"
         # author_app equals to app_name if not specified
