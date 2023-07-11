@@ -189,6 +189,54 @@ def js_fetch(
     return
 
 
+@cli.command()
+def select_checks(
+    main_table_dir: str = typer.Option(
+        ..., "--main-path", "-p", help="The directory where main table inhabit"
+    ),
+    attribute_name: str = typer.Option(
+        ..., "--attribute", "-a", help="the attribute check selection is subject to"
+    ),
+    attribute_value: str = typer.Option(
+        ..., "--value", "-v", help="the value associate with the attribute"
+    ),
+    save_file: str = typer.Option(
+        "",
+        "--save-file",
+        "-s",
+        help="if specified, then save output as csv in the path you choose",
+    ),
+    table_name: str = typer.Option(
+        ".",
+        "--table",
+        "-t",
+        help="the table where you want to select checks from, all the available tables will be selected by default.",
+    ),
+    with_report: bool = typer.Option(
+        True, "--with-report", "-r", help="combine checks with report file information"
+    ),
+):
+    table_manager = TableManager(main_table_dir)
+    df = pl.DataFrame()
+    # table name argument is set as default
+    if table_name == ".":
+        # Then find checks across all the tables
+        df = table_manager.get_checks_by_attribute_across_tables(
+            attribute_name, attribute_value, with_report
+        )
+
+    # Otherwise only find table in the desired table
+    else:
+        df = table_manager.get_checks_by_attribute_one_table(
+            attribute_name, attribute_value, with_report, table_name
+        )
+
+    print(df)
+    if save_file:
+        df.write_csv(save_file)
+    return df
+
+
 @cli.callback()
 def initialize_app():
     """User who access to this app."""
