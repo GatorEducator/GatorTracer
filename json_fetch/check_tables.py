@@ -77,7 +77,6 @@ class TableManager:
     def __init__(self, table_path: str) -> None:
         self.table_path = Path(table_path)
         self.checks_dir = self.table_path / Path("CheckTables")
-        self.initialize_table_path()
         self.tables: Union[
             MainTable, CheckTable
         ] = TableManagerHelper.load_existing_tables(self.table_path)
@@ -91,6 +90,7 @@ class TableManager:
     def append_table_from_matrix(self, observations_w_header: pl.DataFrame):
         """Append items into the target tables based on a matrix where insights are not parsed yet."""
         print("🚀 Adding new matrix to tables....")
+        self.initialize_table_path()
         row_amount = observations_w_header.height
         # Fetch all the insights and drop them from dataframe
         insights = observations_w_header["insight"]
@@ -151,7 +151,9 @@ class TableManager:
         mt = MainTable(self.table_path)
         self.tables[MAIN_TABLE_NAME] = mt
         mt.update(observations_without_insight)
-        rich.print(f"[green] successfully updated or generate all the tables under path: {self.table_path}.")
+        rich.print(
+            f"[green] successfully updated or generated all the tables under path: {self.table_path}."
+        )
 
     def select_checks_by_uid(self, uid: str, save_csv: str = "") -> pl.DataFrame:
         """Select all the checks sharing the same uid."""
