@@ -4,6 +4,7 @@ from pathlib import Path
 
 import polars as pl
 import typer
+from check_tables import TableManager
 from config_console import *
 from pprintjson import pprintjson
 from typing_extensions import Annotated
@@ -141,17 +142,18 @@ def js_fetch(
     file_re: str = typer.Option(
         ".", "--file", "-f", help="The file names in the regex format"
     ),
-    all_insights: bool = typer.Option(
-        False, "--all", "-a", help="fetch all the json files in the target directory"
-    ),
     parse_insight: bool = typer.Option(
-        False, "--parse-insight", "-p", help="parsing insight checks to output matrix"
+        True, "--parse-insight", "-p", help="parsing insight checks to output matrix"
+    ),
+    store_path: str = typer.Option(
+        ".", "--store-path", "-s", help="The path where the output files will inhabit."
     ),
 ):
     token_value = ""
     while token not in "sStT":
         token = input("please select S (saved token) or T (temporary token): ")
 
+    # saved token
     if token in "sS":
         saved_token = Token()
         if saved_token.token_exists():
@@ -161,28 +163,30 @@ def js_fetch(
             raise ValueError(
                 "No saved token, run subcommand `saved_token --save` to set up one or use temporary token."
             )
+    # else temporary token
     else:
         token_value = input("Please provide a github token (it won't be saved): ")
 
-    if all_insights:
-        excluded_dict = ConfigJson(EXCLUDED_JSON).parse_json()
-        included_dict = ConfigJson(INCLUDED_JSON).parse_json()
-        excluded_org, excluded_repo = (
-            excluded_dict["organization"],
-            excluded_dict["repository"],
-        )
-        included_org, included_repo = (
-            included_dict["organization"],
-            included_dict["repository"],
-        )
-        ex_in = (included_org, included_repo, excluded_org, excluded_repo)
-        json_fetch_handler = JsonFetch(token=token_value, instructions=ex_in)
-        insight_tree = json_fetch_handler.get_insight_jsons(
-            dir=dir, branch=branch, file_regex=file_re
-        )
-        insight_matrix = insight_tree.to_flatten_matrix(parse_insight)
-        df = pl.DataFrame(insight_matrix[1:], columns=insight_matrix[0])
-        df.to_csv("report.csv", header=True)
+    excluded_dict = ConfigJson(EXCLUDED_JSON).parse_json()
+    included_dict = ConfigJson(INCLUDED_JSON).parse_json()
+    excluded_org, excluded_repo = (
+        excluded_dict["organization"],
+        excluded_dict["repository"],
+    )
+    included_org, included_repo = (
+        included_dict["organization"],
+        included_dict["repository"],
+    )
+    ex_in = (included_org, included_repo, excluded_org, excluded_repo)
+    json_fetch_handler = JsonFetch(token=token_value, instructions=ex_in)
+    insight_tree = json_fetch_handler.get_insight_jsons(
+        dir=dir, branch=branch, file_regex=file_re
+    )
+    insight_matrix = insight_tree.to_flatten_matrix()
+    df = pl.DataFrame(insight_matrix[1:], schema=insight_matrix[0])
+    table_manager = TableManager(store_path)
+    table_manager.append_table_from_matrix(df)
+    return
 
 
 @cli.callback()
