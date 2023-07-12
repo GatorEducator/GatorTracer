@@ -6,7 +6,7 @@ authors = ["Yanqiao4396 <chen02@allegheny.edu>"]
 readme = "README.md"
 
 [tool.poetry.dependencies]
-python = ">=3.8,<4.0"
+python = ">=3.8.1,<4.0"
 PyGithub = "^1.58.2"
 dash = "^2.10.2"
 plotly = "^5.15.0"
@@ -16,19 +16,26 @@ polars = "^0.18.5"
 rich = "^13.4.2"
 pyarrow = "^12.0.1"
 platformdirs = "^3.8.1"
+
+[tool.poetry.dev-dependencies]
 pylint = "^2.17.4"
 ruff = "^0.0.278"
 black = "^23.7.0"
 taskipy = "^1.11.0"
 isort = "^5.12.0"
 pydocstyle = "^6.3.0"
+flake8 = "^6.0.0"
+mypy = "^1.4.1"
 
 [tool.taskipy.tasks]
 black = { cmd= "black . --check", help = "Run the black checks for source code format" }
 isort = { cmd = "isort -c .", help = "Run the isort checks for source code" }
 pylint = { cmd = "pylint .", help = "Run the pylint checks for source code documentation" }
 style = { cmd = "pydocstyle .", help = "Run the pydocstyle checks for source code documentation" }
-lint = "task black && task isort && task pydocstyle && task pylint"
+flake8 = { cmd = "flake8 .", help = "Run the flake8 checks for source code documentation" }
+mypy = { cmd = "poetry run mypy . --show-error-codes", help = "Run the mypy type checker for potential type" }
+ruff = {cmd = "poetry run ruff .", help = "Run the ruff checks for the source code documentation"}
+lint = "task black && task flake8 && task pydocstyle && task mypy && task pylint && ruff"
 [build-system]
 requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"
