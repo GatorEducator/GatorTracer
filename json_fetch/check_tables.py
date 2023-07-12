@@ -1,4 +1,5 @@
 """Generate tables for each type of check plus a main table."""
+# pylint: disable = invalid-name, too-many-locals
 import base64
 import hashlib
 import json
@@ -17,8 +18,9 @@ MAIN_TABLE_NAME = "MainTable"
 DTYPE_REF = {"str": pl.Utf8, "int": pl.Int64, "float": pl.Float64}
 
 
-# TODO: Make a parent Table for check table and Main table
+# ENHANCEMENT: Make a parent Table for check table and Main table
 class MainTable:
+    """insight report."""
     def __init__(self, table_dir: Path) -> None:
         self.main_table_path = table_dir / f"{MAIN_TABLE_NAME}.csv"
         self.table_place_holder = "deleteme"
@@ -46,6 +48,7 @@ class MainTable:
 
 
 class CheckTable:
+    """Specific check."""
     def __init__(self, table_dir: Path, check_type: str) -> None:
         self.check_table_path = (table_dir) / f"{check_type}.csv"
         self.df = (
@@ -61,6 +64,7 @@ class CheckTable:
         return self
 
     def select_checks_by_uid(self, uid):
+        """Select checks in the check table by uid."""
         df_fits_uid = self.df.filter(pl.col(UID_VAR) == uid)
         return df_fits_uid
 
@@ -74,6 +78,8 @@ class CheckTable:
 
 
 class TableManager:
+    """Table Manager associate Table classes."""
+    # pylint: disable = invalid-name
     def __init__(self, table_path: str) -> None:
         self.table_path = Path(table_path)
         self.checks_dir = self.table_path / Path("CheckTables")
@@ -82,13 +88,14 @@ class TableManager:
         ] = TableManagerHelper.load_existing_tables(self.table_path)
 
     def initialize_table_path(self):
+        """Initialize directory in the file system."""
         if self.checks_dir.is_dir():
             pass
         else:
             self.checks_dir.mkdir(parents=True)
 
     def append_table_from_matrix(self, observations_w_header: pl.DataFrame):
-        """Append items into the target tables based on a matrix where insights are not parsed yet."""
+        """Append items into the target tables from a matrix where insights are not parsed yet."""
         print("🚀 Adding new matrix to tables....")
         self.initialize_table_path()
         row_amount = observations_w_header.height
@@ -120,8 +127,7 @@ class TableManager:
             )
 
             # embed the insight metadata to the main dataframe
-            for insight_info in insight_metadata:
-                inf_value = insight_metadata[insight_info]
+            for insight_info,inf_value in insight_metadata.items():
                 observations_without_insight = TableManagerHelper.update_value_in_df(
                     observations_without_insight,
                     insight_info,
@@ -152,7 +158,8 @@ class TableManager:
         self.tables[MAIN_TABLE_NAME] = mt
         mt.update(observations_without_insight)
         rich.print(
-            f"[green] successfully updated or generated all the tables under path: {self.table_path}."
+            f"""[green] successfully updated or generated
+            all the tables under path: {self.table_path}."""
         )
 
     def select_checks_by_uid(self, uid: str, save_csv: str = "") -> pl.DataFrame:
@@ -177,8 +184,7 @@ class TableManager:
     ):
         """Get matching checks in a specific table."""
         if not isinstance(attribute, str):
-            raise TypeError(f"Column name only accepts string type")
-
+            raise TypeError("Column name only accepts string type")
         if table == MAIN_TABLE_NAME:
             mt = self.tables[table]
             df: pl.DataFrame = mt.df
@@ -276,13 +282,12 @@ class TableManager:
 
     def get_table(self, table_name=MAIN_TABLE_NAME):
         """Get a table dataframe."""
-        if table_name == MAIN_TABLE_NAME:
-            return self.tables[table_name].df
-        else:
-            return self.tables[table_name].df
+        return self.tables[table_name].df
 
 
 class TableManagerHelper:
+    """All the help functions for TableManager that users shouldn't call themselves."""
+    # pylint: disable = redefined-outer-name
     @staticmethod
     def generate_uid(info: str):
         """generate a string uid from a string."""
@@ -298,7 +303,7 @@ class TableManagerHelper:
 
     @staticmethod
     def load_existing_tables(path: Path) -> List[Tuple[Path, str]]:
-        """Load all the tables to a dictionary of dataframe under the current directory and sub-directories."""
+        """Load tables to a dictionary of dataframe from a directory and its sub-directories."""
 
         table_dir = {}
         # Create a Path object for the directory
@@ -325,6 +330,7 @@ class TableManagerHelper:
 
     @staticmethod
     def triage_checks(insight: Dict):
+        """Categorize file level information and checks associate with check type."""
         def flatten_check(dic):
             """recursively fetch key none_dict pairs to an one-dimension dictionary."""
             flattened_pairs = {}
@@ -377,17 +383,3 @@ class TableManagerHelper:
         # Update the value of column in a specific row
         df[row_idx, column_name] = new_value
         return df
-
-
-if __name__ == "__main__":
-    # m = MainTable(".")
-
-    df = pl.read_csv("report.csv")
-    t = TableManager("tables")
-    # a = t.append_table_from_matrix(df)
-    a = t.get_table("MainTable")
-    checks = t.get_checks_by_attribute_across_tables(
-        attribute="objective", attribute_value="meet minimal", with_report=True
-    )
-    print(checks)
-    checks.write_csv("wow.csv")
