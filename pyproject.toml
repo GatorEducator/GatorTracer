@@ -33,6 +33,7 @@ isort = { cmd = "isort -c .", help = "Run the isort checks for source code" }
 pylint = { cmd = "pylint .", help = "Run the pylint checks for source code documentation" }
 style = { cmd = "pydocstyle .", help = "Run the pydocstyle checks for source code documentation" }
 flake8 = { cmd = "flake8 .", help = "Run the flake8 checks for source code documentation" }
+pydocstyle = { cmd = "pydocstyle .", help = "Run the pydocstyle checks for source code documentation" }
 mypy = { cmd = "poetry run mypy . --show-error-codes", help = "Run the mypy type checker for potential type" }
 ruff = {cmd = "poetry run ruff .", help = "Run the ruff checks for the source code documentation"}
 lint = "task black && task flake8 && task pydocstyle && task mypy && task pylint && ruff"
