@@ -6,6 +6,7 @@ from typing import Dict, List, Pattern, Tuple
 
 from github import Github, Organization, Repository
 
+
 class JsonFetch:
     """Fetch Json."""
 
@@ -91,9 +92,10 @@ class JsonFetch:
         return matching_repos
 
     def find_matching_files(self, repo_obj: Repository.Repository) -> List[Dict]:
-        """Fetch all the immediate json files in a directoryectory."""
+        """Fetch all the immediate json files in a directory."""
+        # pylint: disable = invalid-name
         files_dict = []
-        for f in repo_obj.get_contents(self.directory, ref=self.branch): # pylint: disable = invalid-name
+        for f in repo_obj.get_contents(self.directory, ref=self.branch):
             if (
                 f.type == "file"
                 and f.name.endswith(".json")
@@ -125,18 +127,18 @@ class TreeDict:
         rows = []
         title = []
 
-        def flatten(root_dict, values: List = []):
+        def flatten(root_dict, values):
             """Recursively find the non-iterable and put into matrix.
 
             Args:
-                d: dictionary
+                root_dict: dictionary
                 values: a list of recorded non-iterable values inherited from parent dictionary
             """
             # The keys whose value is a list of dictionary
             keys_to_list = []
             found_list = False
             for k in root_dict:
-                if isinstance(root_dict[k], (str,int)):
+                if isinstance(root_dict[k], (str, int)):
                     values.append(root_dict[k])
                     if k not in title:
                         title.append(k)
@@ -149,6 +151,10 @@ class TreeDict:
                     pass  # currently assume there is no other types
             # Base case: there is no more sub-dictionary
             if not found_list:
+                # Python pass argument by reference.
+                # Call with descend of dictionary will change values of variable
+                # Then next run of recursive function will have different content in the variable
+                # So deepcopy to avoid the rewriting from this feature
                 value = copy.deepcopy(values)
                 # Put all the non-iterable values (e.g.: int, str) into the rows
                 rows.append(value)
@@ -159,8 +165,7 @@ class TreeDict:
                         value = copy.deepcopy(values)
                         flatten(sub_d, value)
 
-        flatten(self.__nested_dict)
+        flatten(self.__nested_dict, [])
         matrix_with_title = [title] + rows
         print("⭐ flat matrix was built successfully")
         return matrix_with_title
-        
