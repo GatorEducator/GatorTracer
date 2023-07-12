@@ -18,8 +18,12 @@ polars = "^0.18.5"
 rich = "^13.4.2"
 pyarrow = "^12.0.1"
 platformdirs = "^3.8.1"
+pylint = "^2.17.4"
 
 
 [build-system]
 requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"
+
+[tool.poetry.scripts]
+gatortracer = 'gatortracer.cli:cli'
