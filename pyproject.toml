@@ -8,10 +8,8 @@ readme = "README.md"
 [tool.poetry.dependencies]
 python = ">=3.8,<4.0"
 PyGithub = "^1.58.2"
-customtkinter = "^5.2.0"
 dash = "^2.10.2"
 plotly = "^5.15.0"
-glom = "^23.3.0"
 typer = "<0.7.0,>=0.6.1"
 pprintjson = "^1.4.2"
 polars = "^0.18.5"
@@ -19,8 +17,18 @@ rich = "^13.4.2"
 pyarrow = "^12.0.1"
 platformdirs = "^3.8.1"
 pylint = "^2.17.4"
+ruff = "^0.0.278"
+black = "^23.7.0"
+taskipy = "^1.11.0"
+isort = "^5.12.0"
+pydocstyle = "^6.3.0"
 
-
+[tool.taskipy.tasks]
+black = { cmd= "black . --check", help = "Run the black checks for source code format" }
+isort = { cmd = "isort -c .", help = "Run the isort checks for source code" }
+pylint = { cmd = "pylint .", help = "Run the pylint checks for source code documentation" }
+style = { cmd = "pydocstyle .", help = "Run the pydocstyle checks for source code documentation" }
+lint = "task black && task isort && task pydocstyle && task pylint"
 [build-system]
 requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"
