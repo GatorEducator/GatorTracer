@@ -39,6 +39,7 @@ class JsonFetch:
         # If included orgs are specified, then only fetch the orgs matching with included orgs
         # Otherwise fetch all the orgs not matching with the excluded orgs
         if self.included_orgs:
+            print(f"Finding included organizations matching with {included_combined}")
             # use organization login other than name (i.e. use the url org name)
             # students have to be at least member in the organization
             for org in self.authenticated_api.get_user().get_orgs():
@@ -50,6 +51,7 @@ class JsonFetch:
                         }
                     )
         else:
+            print(f"Finding excluded organizations matching with {included_combined}")
             for org in self.authenticated_api.get_user().get_orgs():
                 if org.login and not re.match(excluded_combined, org.login):
                     self.out_dict["organizations"].append(
@@ -71,6 +73,8 @@ class JsonFetch:
         # Otherwise fetch all the repos not matching with the excluded repos
         matching_repos = []
         if self.included_repos:
+            print(f"Finding included repositories matching with {included_combined}")
+
             for repo in org_obj.get_repos():
                 if re.match(included_combined, repo.name):
                     matching_repos.append(
@@ -81,6 +85,7 @@ class JsonFetch:
                     )
 
         else:
+            print(f"Finding excluded repositories matching with {included_combined}")
             for repo in org_obj.get_repos():
                 if not re.match(excluded_combined, repo.name):
                     matching_repos.append(
@@ -166,6 +171,8 @@ class TreeDict:
                         flatten(sub_d, value)
 
         flatten(self.__nested_dict, [])
+        if len(rows) <= 0:
+            raise ValueError("No insight files are found.")
         matrix_with_title = [title] + rows
         print("⭐ flat matrix was built successfully")
         return matrix_with_title

@@ -158,8 +158,7 @@ class TableManager:
         self.tables[MAIN_TABLE_NAME] = mt
         mt.update(observations_without_insight)
         rich.print(
-            f"""[green] successfully updated or generated
-            all the tables under path: {self.table_path}."""
+            f"""[green] successfully updated or generated all the tables under path: {self.table_path}."""
         )
 
     def select_checks_by_uid(self, uid: str, save_csv: str = "") -> pl.DataFrame:
