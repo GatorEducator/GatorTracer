@@ -1,15 +1,16 @@
 """Token"""
-
+# pylint:disable = invalid-name
 import json
 import os
 from pathlib import Path
 from typing import Dict, List
 
-from platformdirs import *
-from pprintjson import pprintjson
+from platformdirs import user_config_dir
 
-
+ENCODING = "utf-8"
 class Token:
+    """Saved token."""
+    # pylint: disable = line-too-long
     token_file_name = "token.txt"
 
     def __init__(self) -> None:
@@ -20,27 +21,30 @@ class Token:
         self.__token = self.__token_file.read_text()
 
     def token_exists(self):
+        """Check the existence of token."""
         if_token_exists = self.__token != ""
         return if_token_exists
 
     def set_token(self, token):
-        with open(self.__token_file, "w") as f:
+        """Set a new saving token."""
+        with open(self.__token_file, "w", encoding=ENCODING) as f:
             f.write(token)
         self.__token = token
         return True
 
     def remove_token(self):
-        with open(self.__token_file, "r") as f:
+        """Remove saved token."""
+        with open(self.__token_file, "r", encoding=ENCODING) as f:
             if not f.read():
                 return False
 
-        with open(self.__token_file, "w") as f:
+        with open(self.__token_file, "w", encoding=ENCODING) as f:
             f.write("")
         self.__token = ""
         return True
 
-    # Probably shouldn't allow users to call this function??
     def get_token(self):
+        """Get the saved token."""
         return self.__token
 
     @staticmethod
@@ -82,21 +86,25 @@ class ConfigJson:
         self.set_empty_json_to_default()
 
     def write_json(self, content):
-        with open(self.json_file, "w") as f:
+        """Write Json."""
+        with open(self.json_file, "w", encoding=ENCODING) as f:
             json.dump(content, f)
 
     def default_json(self):
-        with open(self.json_file, "w") as f:
+        """Set Json file to default."""
+        with open(self.json_file, "w", encoding=ENCODING) as f:
             json.dump(self.json_default, f)
 
     def parse_json(self) -> Dict:
-        with open(self.json_file, "r") as f:
+        """Parse Json to get content."""
+        with open(self.json_file, "r", encoding=ENCODING) as f:
             js_dict = json.load(f)
         return js_dict
 
     def set_empty_json_to_default(self):
+        """Set an empty Json to default."""
         if os.stat(self.json_file).st_size == 0:
-            with open(self.json_file, "w+") as f:
+            with open(self.json_file, "w+", encoding=ENCODING) as f:
                 json.dump(self.json_default, f)
 
     @staticmethod
@@ -108,7 +116,8 @@ class ConfigJson:
             # more than 1 found
             if found > 1:
                 raise FileExistsError(
-                    f"More than one file names {json_name} under config directory. Remove duplicated one."
+                    f"""More than one file names {json_name} under config directory.
+                    Remove duplicated one."""
                 )
             # find json file name in file path
             if json_name in f:
@@ -126,6 +135,7 @@ class ConfigJson:
 
 
 class ConfigPath:
+    """Configuration Path."""
     def __init__(self) -> None:
         self.app_name = "GatorTracer"
         # author_app equals to app_name if not specified
@@ -140,6 +150,7 @@ class ConfigPath:
         self.config_files = ConfigPath.parse_path_dict(self.config_files_tree)
 
     def initialize_config_path(self):
+        """Initialize path of all needed user configuration path.s"""
         main_config_path = Path(self.config_dir)
 
         # make directory of config path
@@ -182,6 +193,7 @@ class ConfigPath:
                     parsed_paths.append(content_path.as_posix())
                 else:
                     raise TypeError(
-                        f"Unexpected type {type(content)} for {content} in the path tree. Should be str for file or dict for dir."
+                        f"""Unexpected type {type(content)} for {content} in the path tree.
+                         Should be str for file or dict for dir."""
                     )
         return parsed_paths

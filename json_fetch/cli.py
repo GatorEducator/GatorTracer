@@ -1,4 +1,6 @@
 """Official CLI."""
+# pylint: disable = too-many-arguments
+# pylint: disable = invalid-name
 import json
 from pathlib import Path
 
@@ -7,7 +9,6 @@ import typer
 from check_tables import TableManager
 from config_console import *
 from pprintjson import pprintjson
-from typing_extensions import Annotated
 
 from json_fetch import JsonFetch
 
@@ -21,13 +22,14 @@ def saved_token(
         False, "--verify", "-v", help="verify if there is stored gh token"
     ),
     save: str = typer.Option("", "--save", "-s", help="save a new gh token"),
-    rm: bool = typer.Option(
+    remove: bool = typer.Option(
         False, "--remove", "-r", help="remove the currente stored gh token"
     ),
 ):
+    """CVUD (create, verify, update, delete) with saved token."""
     gh_token = Token()
 
-    if rm:
+    if remove:
         return_flag = gh_token.remove_token()
         if return_flag:
             print("Saved token has been removed")
@@ -74,6 +76,7 @@ def config(
         help="Write configuration exclude.json from another json file",
     ),
 ):
+    """CRUD (create, read, update, delete) configuration files (not including saved-token)."""
     in_config = ConfigJson(INCLUDED_JSON)
     ex_config = ConfigJson(EXCLUDED_JSON)
     if display_all:
@@ -99,7 +102,6 @@ def config(
         ex_config.default_json()
 
     if clear_in:
-        # TODO: preserve key organization and repo
         in_config.default_json()
 
     if clear_ex:
@@ -136,12 +138,13 @@ def js_fetch(
     branch: str = typer.Option(
         "insight", "--branch", "-b", help="The branch where json(s) reside"
     ),
-    dir: str = typer.Option(
+    directory: str = typer.Option(
         ..., "--dir", "-d", help="The directory where json(s) reside"
     ),
     file_re: str = typer.Option(
-        ".", "--file", "-f", help="The file names in the regex format"
+        ".", "--file", "-f", help="The file names in the regex foremoveat"
     ),
+    # pylint:disable = unused-argument
     parse_insight: bool = typer.Option(
         True, "--parse-insight", "-p", help="parsing insight checks to output matrix"
     ),
@@ -149,6 +152,7 @@ def js_fetch(
         ".", "--store-path", "-s", help="The path where the output files will inhabit."
     ),
 ):
+    """Fetch desired json files in GitHub associate with the flags and user configuration files."""
     token_value = ""
     while token not in "sStT":
         token = input("please select S (saved token) or T (temporary token): ")
@@ -161,7 +165,7 @@ def js_fetch(
             print("successfully fetched saved token")
         else:
             raise ValueError(
-                "No saved token, run subcommand `saved_token --save` to set up one or use temporary token."
+                "No saved token, run subcommand `saved_token --save` to set up one or use temporary token."  # pylint: disable = line-too-long
             )
     # else temporary token
     else:
@@ -180,13 +184,12 @@ def js_fetch(
     ex_in = (included_org, included_repo, excluded_org, excluded_repo)
     json_fetch_handler = JsonFetch(token=token_value, instructions=ex_in)
     insight_tree = json_fetch_handler.get_insight_jsons(
-        dir=dir, branch=branch, file_regex=file_re
+        directory=directory, branch=branch, file_regex=file_re
     )
     insight_matrix = insight_tree.to_flatten_matrix()
     df = pl.DataFrame(insight_matrix[1:], schema=insight_matrix[0])
     table_manager = TableManager(store_path)
     table_manager.append_table_from_matrix(df)
-    return
 
 
 @cli.command()
@@ -210,12 +213,16 @@ def select_checks(
         ".",
         "--table",
         "-t",
-        help="the table where you want to select checks from, all the available tables will be selected by default.",
+        help="""
+        the table where you want to select checks from,
+        all the available tables will be selected by default.
+            """,
     ),
     with_report: bool = typer.Option(
-        True, "--with-report", "-r", help="combine checks with report file information"
+        True, "--with-report", "-r", help="combine checks with report file inforemoveation"
     ),
 ):
+    """Select checks."""
     table_manager = TableManager(main_table_dir)
     df = pl.DataFrame()
     # table name argument is set as default
