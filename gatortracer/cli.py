@@ -6,11 +6,11 @@ from pathlib import Path
 
 import polars as pl
 import typer
-from check_tables import TableManager
-from config_console import *
+from gatortracer.check_tables import TableManager
+from gatortracer.config_console import *
 from pprintjson import pprintjson
 
-from json_fetch import JsonFetch
+from gatortracer.json_fetch import JsonFetch
 
 cli = typer.Typer()
 EXCLUDED_JSON, INCLUDED_JSON = "exclude.json", "include.json"
