@@ -21,7 +21,9 @@ DTYPE_REF = {"str": pl.Utf8, "int": pl.Int64, "float": pl.Float64}
 # ENHANCEMENT: Make a parent Table for check table and Main table
 class MainTable:
     """insight report."""
+
     def __init__(self, table_dir: Path) -> None:
+        """Initialize a MainTable instance with a directory."""
         self.main_table_path = table_dir / f"{MAIN_TABLE_NAME}.csv"
         self.table_place_holder = "deleteme"
         self.df = (
@@ -39,7 +41,7 @@ class MainTable:
         return self
 
     def get_reports_by_uids(self, uids: List[str]):
-        """return a list of insight rows by uids."""
+        """Return a list of insight rows by uids."""
         matchings = pl.DataFrame()
         for uid in uids:
             matchings = pl.concat([self.df.filter(pl.col(UID_VAR == uid)), matchings])
@@ -49,7 +51,14 @@ class MainTable:
 
 class CheckTable:
     """Specific check."""
+
     def __init__(self, table_dir: Path, check_type: str) -> None:
+        """Initialize CheckTable instance.
+        
+        Args:
+            table_dir: the directory where certain check table resides
+            check_type: The name of check file without extension
+        """
         self.check_table_path = (table_dir) / f"{check_type}.csv"
         self.df = (
             pl.read_csv(self.check_table_path)
@@ -69,7 +78,7 @@ class CheckTable:
         return df_fits_uid
 
     def get_checks_by_uids(self, uids: List[str]):
-        """return a list of insight rows by uids."""
+        """Return a list of insight rows by uids."""
         matchings = pl.DataFrame()
         for uid in uids:
             matchings = pl.concat([self.df.filter(pl.col(UID_VAR == uid)), matchings])
@@ -79,8 +88,14 @@ class CheckTable:
 
 class TableManager:
     """Table Manager associate Table classes."""
+
     # pylint: disable = invalid-name
     def __init__(self, table_path: str) -> None:
+        """Initialize Table Manager instance.
+
+        Args:
+            table_path: the path where main table reside
+        """
         self.table_path = Path(table_path)
         self.checks_dir = self.table_path / Path("CheckTables")
         self.tables: Union[
@@ -127,7 +142,7 @@ class TableManager:
             )
 
             # embed the insight metadata to the main dataframe
-            for insight_info,inf_value in insight_metadata.items():
+            for insight_info, inf_value in insight_metadata.items():
                 observations_without_insight = TableManagerHelper.update_value_in_df(
                     observations_without_insight,
                     insight_info,
@@ -286,10 +301,11 @@ class TableManager:
 
 class TableManagerHelper:
     """All the help functions for TableManager that users shouldn't call themselves."""
+
     # pylint: disable = redefined-outer-name
     @staticmethod
     def generate_uid(info: str):
-        """generate a string uid from a string."""
+        """Generate a string uid from a string."""
         # Hash the row string using MD5
         md5_hash = hashlib.md5(info.encode())
 
@@ -301,9 +317,8 @@ class TableManagerHelper:
         return short_id
 
     @staticmethod
-    def load_existing_tables(path: Path) -> List[Tuple[Path, str]]:
+    def load_existing_tables(path: Path) -> dict[str, MainTable]:
         """Load tables to a dictionary of dataframe from a directory and its sub-directories."""
-
         table_dir = {}
         # Create a Path object for the directory
 
@@ -330,8 +345,9 @@ class TableManagerHelper:
     @staticmethod
     def triage_checks(insight: Dict):
         """Categorize file level information and checks associate with check type."""
+
         def flatten_check(dic):
-            """recursively fetch key none_dict pairs to an one-dimension dictionary."""
+            """Recursively fetch key none_dict pairs to an one-dimension dictionary."""
             flattened_pairs = {}
             for arg in dic:
                 if isinstance(dic[arg], Dict):
@@ -382,3 +398,10 @@ class TableManagerHelper:
         # Update the value of column in a specific row
         df[row_idx, column_name] = new_value
         return df
+
+
+if __name__ == "__main__":
+    tm = TableManager("examples/tables")
+    wow = tm.get_checks_by_attribute_across_tables(attribute="status", attribute_value= False)
+    print(wow)
+

@@ -6,10 +6,10 @@ from pathlib import Path
 
 import polars as pl
 import typer
-from gatortracer.check_tables import TableManager
-from gatortracer.config_console import *
 from pprintjson import pprintjson
 
+from gatortracer.check_tables import TableManager
+from gatortracer.config_console import *
 from gatortracer.json_fetch import JsonFetch
 
 cli = typer.Typer()
@@ -219,7 +219,10 @@ def select_checks(
             """,
     ),
     with_report: bool = typer.Option(
-        True, "--with-report", "-r", help="combine checks with report file inforemoveation"
+        True,
+        "--with-report",
+        "-r",
+        help="combine checks with report file inforemoveation",
     ),
 ):
     """Select checks."""
@@ -231,7 +234,6 @@ def select_checks(
         df = table_manager.get_checks_by_attribute_across_tables(
             attribute_name, attribute_value, with_report
         )
-
     # Otherwise only find table in the desired table
     else:
         df = table_manager.get_checks_by_attribute_one_table(

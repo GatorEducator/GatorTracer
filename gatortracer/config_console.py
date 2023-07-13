@@ -1,4 +1,4 @@
-"""Token"""
+"""Configuration related."""
 # pylint:disable = invalid-name
 import json
 import os
@@ -8,12 +8,16 @@ from typing import Dict, List
 from platformdirs import user_config_dir
 
 ENCODING = "utf-8"
+
+
 class Token:
     """Saved token."""
+
     # pylint: disable = line-too-long
     token_file_name = "token.txt"
 
     def __init__(self) -> None:
+        """Initialize Token instance."""
         con_path = ConfigPath()
         con_dir, con_files = con_path.config_dir, con_path.config_files
         token_file = self.find_token_file(con_files)
@@ -75,6 +79,11 @@ class ConfigJson:
     """A group of rules of excluded and included."""
 
     def __init__(self, json_name: str) -> None:
+        """Initialize ConfigJson instance.
+
+        Args:
+            json_name: The name of configuration json
+        """
         self.json_name = json_name
         con_path = ConfigPath()
         con_dir, con_files = con_path.config_dir, con_path.config_files
@@ -136,13 +145,15 @@ class ConfigJson:
 
 class ConfigPath:
     """Configuration Path."""
+
     def __init__(self) -> None:
+        """Initialize configuration instance."""
         self.app_name = "GatorTracer"
         # author_app equals to app_name if not specified
         self.config_dir = user_config_dir(self.app_name)
         # key -> dirs, value -> list of config files
         # file -> string, folder -> sub_dict
-        self.config_files_tree: Dict[List[str]] = {
+        self.config_files_tree: Dict[List[str], str] = {
             "fetch_scope": ["exclude.json", "include.json"],
             "secret": ["token.txt"],
         }
@@ -150,7 +161,7 @@ class ConfigPath:
         self.config_files = ConfigPath.parse_path_dict(self.config_files_tree)
 
     def initialize_config_path(self):
-        """Initialize path of all needed user configuration path.s"""
+        """Initialize path of all needed user configuration paths."""
         main_config_path = Path(self.config_dir)
 
         # make directory of config path
