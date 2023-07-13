@@ -197,6 +197,12 @@ class TableManager:
         self, attribute: str, attribute_value, with_report=False, table="MainTable"
     ):
         """Get matching checks in a specific table."""
+        # Convert string to bool
+        if attribute_value in ["True", "true"]:
+            attribute_value = True
+        if attribute_value in ["False", "false"]:
+            attribute_value = False
+
         if not isinstance(attribute, str):
             raise TypeError("Column name only accepts string type")
         if table == MAIN_TABLE_NAME:
