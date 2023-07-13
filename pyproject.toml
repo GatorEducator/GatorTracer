@@ -16,6 +16,7 @@ polars = "^0.18.5"
 rich = "^13.4.2"
 pyarrow = "^12.0.1"
 platformdirs = "^3.8.1"
+pytest = "^7.4.0"
 
 [tool.poetry.dev-dependencies]
 pylint = "^2.17.4"
@@ -36,7 +37,9 @@ flake8 = { cmd = "flake8 .", help = "Run the flake8 checks for source code docum
 pydocstyle = { cmd = "pydocstyle .", help = "Run the pydocstyle checks for source code documentation" }
 mypy = { cmd = "poetry run mypy . --show-error-codes", help = "Run the mypy type checker for potential type" }
 ruff = {cmd = "poetry run ruff .", help = "Run the ruff checks for the source code documentation"}
+test = { cmd = "pytest tests -s -v", help = "Run the program test"}
 lint = "task black && task flake8 && task pydocstyle && task mypy && task pylint && ruff"
+
 [build-system]
 requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"
