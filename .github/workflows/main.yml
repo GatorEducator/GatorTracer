@@ -42,11 +42,6 @@ jobs:
   test:
       name: Test
       runs-on: ubuntu-latest
-      strategy:
-        # Turning fail-fast off ensures the entire strategy matrix is allowed to
-        # run to completion, allowing detection of individual platform issues
-        # regardless of the status of the other platforms.
-        fail-fast: false
       steps:
         - name: Checkout repository
           uses: actions/checkout@v2
@@ -60,5 +55,4 @@ jobs:
         - name: Install dependencies
           run: poetry install
         - name: Execute tests
-        - name: run test
           run: poetry run task test
