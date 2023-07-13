@@ -144,10 +144,6 @@ def js_fetch(
     file_re: str = typer.Option(
         ".", "--file", "-f", help="The file names in the regex foremoveat"
     ),
-    # pylint:disable = unused-argument
-    parse_insight: bool = typer.Option(
-        True, "--parse-insight", "-p", help="parsing insight checks to output matrix"
-    ),
     store_path: str = typer.Option(
         ".", "--store-path", "-s", help="The path where the output files will inhabit."
     ),
