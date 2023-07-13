@@ -1,0 +1,28 @@
+description,language,count,exact,status,uid,diagnostic,path
+"Create a sufficient number of docstring (i.e., multiple-line) comments in search.py",Python,2,false,true,cZdEgIWQoeIofDdrYH/Afg==,,
+"Create a sufficient number of docstring (i.e., multiple-line) comments in test_fibonacci.py",Python,6,false,true,2zdwxa4w1RzMTPppmcTgrA==,,fibonaccicreator/tests/test_fibonacci.py
+"Create a sufficient number of docstring (i.e., multiple-line) comments in create-dog-with-dictionary.py",Python,1,false,false,nS+BKKonuI3r3x6z9BOXLw==,Found 0 comment(s) in the create-dog-with-dictionary.py or the output,source/create-dog-with-dictionary.py
+"Create a sufficient number of docstring (i.e., multiple-line) comments in main.py",Python,3,false,true,2zdwxa4w1RzMTPppmcTgrA==,,fibonaccicreator/fibonaccicreator/main.py
+"Create a sufficient number of docstring (i.e., multiple-line) comments in test_fibonacci.py",Python,6,false,true,33x/IdA+veSNbwwV+sZAeg==,,fibonaccicreator/tests/test_fibonacci.py
+"Create a sufficient number of docstring (i.e., multiple-line) comments in create-dog-with-list.py",Python,1,false,false,mZPZSbWInH7C7NJAM+UA3w==,Found 0 comment(s) in the create-dog-with-list.py or the output,
+"Create a sufficient number of docstring (i.e., multiple-line) comments in fibonacci.py",Python,5,false,true,b6vKWo8XetQV73efl+7ZIA==,,fibonaccicreator/fibonaccicreator/fibonacci.py
+"Create a sufficient number of docstring (i.e., multiple-line) comments in test_fibonacci.py",Python,6,false,true,Rc9Hc3YcbAwPRaxiorY2XA==,,fibonaccicreator/tests/test_fibonacci.py
+"Create a sufficient number of docstring (i.e., multiple-line) comments in main.py",Python,3,false,true,wC69ew7NwVXVb1dj2hr23w==,,fibonaccicreator/fibonaccicreator/main.py
+"Create a sufficient number of docstring (i.e., multiple-line) comments in test_fibonacci.py",Python,6,false,true,wC69ew7NwVXVb1dj2hr23w==,,fibonaccicreator/tests/test_fibonacci.py
+"Create a sufficient number of docstring (i.e., multiple-line) comments in test_search.py",Python,5,false,true,cZdEgIWQoeIofDdrYH/Afg==,,
+"Create a sufficient number of docstring (i.e., multiple-line) comments in create-dog-with-dictionary.py",Python,1,false,false,mZPZSbWInH7C7NJAM+UA3w==,Found 0 comment(s) in the create-dog-with-dictionary.py or the output,
+"Create a sufficient number of docstring (i.e., multiple-line) comments in create-dog-with-list.py",Python,1,false,false,nS+BKKonuI3r3x6z9BOXLw==,Found 0 comment(s) in the create-dog-with-list.py or the output,source/create-dog-with-list.py
+"Create a sufficient number of docstring (i.e., multiple-line) comments in main.py",Python,2,false,true,cZdEgIWQoeIofDdrYH/Afg==,,
+"Create a sufficient number of docstring (i.e., multiple-line) comments in create-dog-with-class.py",Python,2,false,false,nS+BKKonuI3r3x6z9BOXLw==,Found 0 comment(s) in the create-dog-with-class.py or the output,source/create-dog-with-class.py
+"Create a sufficient number of docstring (i.e., multiple-line) comments in main.py",Python,3,false,true,33x/IdA+veSNbwwV+sZAeg==,,fibonaccicreator/fibonaccicreator/main.py
+"Create a sufficient number of docstring (i.e., multiple-line) comments in main.py",Python,3,false,true,Rc9Hc3YcbAwPRaxiorY2XA==,,fibonaccicreator/fibonaccicreator/main.py
+"Create a sufficient number of docstring (i.e., multiple-line) comments in main.py",Python,3,false,true,p5K7+j/WnpdDSeiVoM6iFA==,,fibonaccicreator/fibonaccicreator/main.py
+"Create a sufficient number of docstring (i.e., multiple-line) comments in test_fibonacci.py",Python,6,false,true,p5K7+j/WnpdDSeiVoM6iFA==,,fibonaccicreator/tests/test_fibonacci.py
+"Create a sufficient number of docstring (i.e., multiple-line) comments in fibonacci.py",Python,5,false,true,p5K7+j/WnpdDSeiVoM6iFA==,,fibonaccicreator/fibonaccicreator/fibonacci.py
+"Create a sufficient number of docstring (i.e., multiple-line) comments in main.py",Python,3,false,true,b6vKWo8XetQV73efl+7ZIA==,,fibonaccicreator/fibonaccicreator/main.py
+"Create a sufficient number of docstring (i.e., multiple-line) comments in create-dog-with-class.py",Python,2,false,false,mZPZSbWInH7C7NJAM+UA3w==,Found 0 comment(s) in the create-dog-with-class.py or the output,
+"Create a sufficient number of docstring (i.e., multiple-line) comments in fibonacci.py",Python,5,false,true,2zdwxa4w1RzMTPppmcTgrA==,,fibonaccicreator/fibonaccicreator/fibonacci.py
+"Create a sufficient number of docstring (i.e., multiple-line) comments in fibonacci.py",Python,5,false,true,wC69ew7NwVXVb1dj2hr23w==,,fibonaccicreator/fibonaccicreator/fibonacci.py
+"Create a sufficient number of docstring (i.e., multiple-line) comments in fibonacci.py",Python,5,false,true,Rc9Hc3YcbAwPRaxiorY2XA==,,fibonaccicreator/fibonaccicreator/fibonacci.py
+"Create a sufficient number of docstring (i.e., multiple-line) comments in fibonacci.py",Python,5,false,true,33x/IdA+veSNbwwV+sZAeg==,,fibonaccicreator/fibonaccicreator/fibonacci.py
+"Create a sufficient number of docstring (i.e., multiple-line) comments in test_fibonacci.py",Python,6,false,true,b6vKWo8XetQV73efl+7ZIA==,,fibonaccicreator/tests/test_fibonacci.py

@@ -7,7 +7,8 @@ import polars as pl
 
 
 def scatter_fibo_percentage():
-    df = pl.read_csv("wow.csv")
+    """Get scatter diagram to analyze percentages across time of fibonacci assignment."""
+    df = pl.read_csv("examples/status_false.csv")
     df_with_time = df.filter(pl.col("report_time").is_not_null())
 
     df_with_time = df_with_time.with_columns(
@@ -33,7 +34,8 @@ def scatter_fibo_percentage():
 
 
 def pie_objective():
-    df = pl.read_csv("wow.csv")
+    """Doing analysis with pie diagram to learn objective."""
+    df = pl.read_csv("examples/objective_lint.csv")
     df = df.with_columns(pl.col(["status", "repo-name"]).fill_null("None"))
     objectives = df["status"].to_list()
     counter = Counter(objectives)

@@ -1,0 +1,36 @@
+description,tag,count,exact,status,uid,path,diagnostic,objective
+Confirm that the markdown file has the correct number of fenced code blocks,code_block,4,false,false,cZdEgIWQoeIofDdrYH/Afg==,,Found 0 tag(s) in the reflection.md file,
+Confirm that the markdown file has the correct number of headers,heading,7,false,true,mZPZSbWInH7C7NJAM+UA3w==,,,
+Confirm that the markdown file has the correct number of fenced code blocks,code_block,10,false,true,Rc9Hc3YcbAwPRaxiorY2XA==,writing/reflection.md,,meet minimal
+Confirm that the markdown file has the correct number of headers,heading,18,false,true,p5K7+j/WnpdDSeiVoM6iFA==,writing/reflection.md,,meet minimal
+Confirm that the markdown file has the correct number of headers,heading,18,false,true,wC69ew7NwVXVb1dj2hr23w==,writing/reflection.md,,meet minimal
+Confirm that the markdown file has a at least a minimum number of headers,heading,15,false,true,jXWJ09jdaXPRqtmSdda6IA==,writing/review.md,,
+Confirm that the markdown file has the correct number of fenced code blocks,code_block,7,false,false,33x/IdA+veSNbwwV+sZAeg==,writing/reflection.md,Found 0 tag(s) in the reflection.md file,reflection
+Confirm that the markdown file has the correct number of headers,heading,14,false,true,wC69ew7NwVXVb1dj2hr23w==,writing/reflection.md,,reflection
+Confirm that the markdown file has the correct number of fenced code blocks,code_block,7,false,false,p5K7+j/WnpdDSeiVoM6iFA==,writing/reflection.md,Found 0 tag(s) in the reflection.md file,reflection
+Confirm that the markdown file has the correct number of fenced code blocks,code_block,10,false,false,33x/IdA+veSNbwwV+sZAeg==,writing/reflection.md,Found 0 tag(s) in the reflection.md file,meet minimal
+Confirm that the markdown file has the correct number of headers,heading,14,false,true,cZdEgIWQoeIofDdrYH/Afg==,,,
+Confirm that the markdown file has the correct number of headers,heading,14,false,true,p5K7+j/WnpdDSeiVoM6iFA==,writing/reflection.md,,reflection
+Confirm that the markdown file has the correct number of fenced code blocks,code_block,3,false,false,mZPZSbWInH7C7NJAM+UA3w==,,Found 0 tag(s) in the reflection.md file,
+Confirm that the markdown file has a at least a minimum number of headers,heading,15,false,true,inxu6J85kI1o0GMSeSb7NQ==,writing/review.md,,meet minimal
+Confirm that the markdown file has the correct number of headers,heading,14,false,true,33x/IdA+veSNbwwV+sZAeg==,writing/reflection.md,,reflection
+Confirm that the markdown file has a at least a minimum number of headers,heading,15,false,true,e3xQoIBn3JNKWAA3CFsBDQ==,,,
+Confirm that the markdown file has the correct number of headers,heading,18,false,true,33x/IdA+veSNbwwV+sZAeg==,writing/reflection.md,,meet minimal
+Confirm that the markdown file has the correct number of fenced code blocks,code_block,10,false,false,2zdwxa4w1RzMTPppmcTgrA==,writing/reflection.md,Found 0 tag(s) in the reflection.md file,meet minimal
+Confirm that the markdown file has the correct number of fenced code blocks,code_block,10,false,false,b6vKWo8XetQV73efl+7ZIA==,writing/reflection.md,Found 0 tag(s) in the reflection.md file,meet minimal
+Confirm that the markdown file has the correct number of fenced code blocks,code_block,7,false,false,2zdwxa4w1RzMTPppmcTgrA==,writing/reflection.md,Found 0 tag(s) in the reflection.md file,reflection
+Confirm that the markdown file has the correct number of fenced code blocks,code_block,7,false,false,b6vKWo8XetQV73efl+7ZIA==,writing/reflection.md,Found 0 tag(s) in the reflection.md file,reflection
+Confirm that the markdown file has the correct number of fenced code blocks,code_block,10,false,false,p5K7+j/WnpdDSeiVoM6iFA==,writing/reflection.md,Found 0 tag(s) in the reflection.md file,meet minimal
+Confirm that the markdown file has the correct number of fenced code blocks,code_block,10,false,false,wC69ew7NwVXVb1dj2hr23w==,writing/reflection.md,Found 0 tag(s) in the reflection.md file,meet minimal
+Confirm that the markdown file has the correct number of fenced code blocks,code_block,7,false,false,wC69ew7NwVXVb1dj2hr23w==,writing/reflection.md,Found 0 tag(s) in the reflection.md file,reflection
+Confirm that the markdown file has the correct number of headers,heading,18,false,true,b6vKWo8XetQV73efl+7ZIA==,writing/reflection.md,,meet minimal
+Confirm that the markdown file has the correct number of fenced code blocks,code_block,7,false,true,Rc9Hc3YcbAwPRaxiorY2XA==,writing/reflection.md,,reflection
+Confirm that the markdown file has the correct number of headers,heading,14,false,true,b6vKWo8XetQV73efl+7ZIA==,writing/reflection.md,,reflection
+Confirm that the markdown file has the correct number of fenced code blocks,code_block,3,false,false,nS+BKKonuI3r3x6z9BOXLw==,writing/reflection.md,Found 0 tag(s) in the reflection.md file,
+Confirm that the markdown file has a at least a minimum number of headers,heading,15,false,true,etStjSr28Qe6nwdZLHSAew==,writing/review.md,,meet minimal
+Confirm that the markdown file has a at least a minimum number of headers,heading,15,false,true,ZoVZb/cfVDFEZusZmwHoZw==,,,
+Confirm that the markdown file has the correct number of headers,heading,14,false,true,Rc9Hc3YcbAwPRaxiorY2XA==,writing/reflection.md,,reflection
+Confirm that the markdown file has the correct number of headers,heading,18,false,true,Rc9Hc3YcbAwPRaxiorY2XA==,writing/reflection.md,,meet minimal
+Confirm that the markdown file has the correct number of headers,heading,14,false,true,2zdwxa4w1RzMTPppmcTgrA==,writing/reflection.md,,reflection
+Confirm that the markdown file has the correct number of headers,heading,7,false,true,nS+BKKonuI3r3x6z9BOXLw==,writing/reflection.md,,
+Confirm that the markdown file has the correct number of headers,heading,18,false,true,2zdwxa4w1RzMTPppmcTgrA==,writing/reflection.md,,meet minimal
