@@ -19,11 +19,11 @@ EXCLUDED_JSON, INCLUDED_JSON = "exclude.json", "include.json"
 @cli.command()
 def saved_token(
     verify: bool = typer.Option(
-        False, "--verify", "-v", help="verify if there is stored gh token"
+        False, "--verify", "-v", help="Verify if there is stored gh token"
     ),
     save: str = typer.Option("", "--save", "-s", help="save a new gh token"),
     remove: bool = typer.Option(
-        False, "--remove", "-r", help="remove the currente stored gh token"
+        False, "--remove", "-r", help="Remove the currente stored gh token"
     ),
 ):
     """CVUD (create, verify, update, delete) with saved token."""
@@ -48,32 +48,32 @@ def saved_token(
 @cli.command()
 def config(
     display_all: bool = typer.Option(
-        False, "--display-all", help="display both exclude and include config json file"
+        False, "--display-all", help="Display both exclude and include config json file."
     ),
     display_in: bool = typer.Option(
-        False, "--display-in", help="display the include config json file"
+        False, "--display-in", help="Display the include config json file."
     ),
     display_ex: bool = typer.Option(
-        False, "--display-ex", help="display the exclude config json file"
+        False, "--display-ex", help="Display the exclude config json file."
     ),
     clear_all: bool = typer.Option(
-        False, "--clear-all", help="clear both exclude and include config json file"
+        False, "--clear-all", help="Clear both exclude and include config json file."
     ),
     clear_in: bool = typer.Option(
-        False, "--clear-in", help="clear include config json file"
+        False, "--clear-in", help="Clear include config json file."
     ),
     clear_ex: bool = typer.Option(
-        False, "--clear-ex", help="clear exclude config json file"
+        False, "--clear-ex", help="Clear exclude config json file."
     ),
     in_from_file: str = typer.Option(
         "",
         "--in-from-file",
-        help="Write configuration include.json from another json file",
+        help="Write configuration include.json from another json file.",
     ),
     ex_from_file: str = typer.Option(
         "",
         "--ex-from-file",
-        help="Write configuration exclude.json from another json file",
+        help="Write configuration exclude.json from another json file.",
     ),
 ):
     """CRUD (create, read, update, delete) configuration files (not including saved-token)."""
@@ -133,16 +133,16 @@ def js_fetch(
         "--token",
         "-t",
         prompt="saved token or tmp token[S/T]",
-        help="Choose the kind of token to use: either the saved token or the temporary token",
+        help="Choose the kind of token to use: either the saved token or the temporary token.",
     ),
     branch: str = typer.Option(
-        "insight", "--branch", "-b", help="The branch where json(s) reside"
+        "insight", "--branch", "-b", help="The branch where json(s) reside."
     ),
     directory: str = typer.Option(
-        ..., "--dir", "-d", help="The directory where json(s) reside"
+        ..., "--dir", "-d", help="The directory where json(s) reside."
     ),
     file_re: str = typer.Option(
-        ".", "--file", "-f", help="The file names in the regex foremoveat"
+        ".", "--file", "-f", help="The file names in the regex format."
     ),
     store_path: str = typer.Option(
         ".", "--store-path", "-s", help="The path where the output files will inhabit."
