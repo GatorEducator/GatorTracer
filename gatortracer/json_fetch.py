@@ -4,7 +4,7 @@ import copy
 import re
 from typing import Dict, List, Pattern, Tuple
 
-from github import Github, Organization, Repository
+from github import Github, Organization, Repository, UnknownObjectException
 
 
 class JsonFetch:
@@ -100,7 +100,12 @@ class JsonFetch:
         """Fetch all the immediate json files in a directory."""
         # pylint: disable = invalid-name
         files_dict = []
-        for f in repo_obj.get_contents(self.directory, ref=self.branch):
+        print(repo_obj.name)
+        try:
+            contents = repo_obj.get_contents(self.directory, ref=self.branch)
+        except UnknownObjectException:
+            return files_dict
+        for f in contents:
             if (
                 f.type == "file"
                 and f.name.endswith(".json")
